@@ -22,7 +22,7 @@ WORKDIR /app
 #RUN apk update --no-cache && \
     #apk add --no-cache openssl ca-certificates # <--- Use apk add
 
-COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /app/dist ./dist
 EXPOSE 4000
 
 CMD ["bun", "run", "dist/index.js"]
