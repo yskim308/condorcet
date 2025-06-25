@@ -3,9 +3,9 @@ services:
     build:
       context: .       # Look for the Dockerfile in the current directory
       dockerfile: Dockerfile # Specify the Dockerfile to use (optional if named 'Dockerfile')
+      target: development    # Use the development stage for hot reloading
     ports:
-      - "4000:4000"    # Map host port 3000 to container port 3000
-                       # Your bun app should be configured to listen on 3000
+      - "4000:4000"    # Map host port 4000 to container port 4000
 
     # Load environment variables from .env files
     # Compose loads env_file in the order specified.
@@ -22,6 +22,4 @@ services:
       # the container's node_modules (which were installed by bun install inside the container).
       # This is CRUCIAL for Node.js/bun dev experience with volumes.
       - /app/node_modules
-    
-    command: bun --watch index.ts
 

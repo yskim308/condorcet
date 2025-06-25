@@ -8,20 +8,20 @@ COPY package*.json ./
 COPY bun*.lockb ./
 RUN bun install
 
+# development stage
+FROM deps as development
+COPY . .
+EXPOSE 4000
+CMD ["bun", "--watch", "index.ts"]
+
 # build stage
 FROM deps as build
-
 COPY . .
-
 RUN bun build ./index.ts --outdir ./dist --target=bun
 
 # runtime 
 FROM base as release
 WORKDIR /app
-
-#RUN apk update --no-cache && \
-    #apk add --no-cache openssl ca-certificates # <--- Use apk add
-
 COPY --from=build /app/dist ./dist
 EXPOSE 4000
 
