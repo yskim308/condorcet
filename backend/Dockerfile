@@ -1,5 +1,5 @@
 # base image
-FROM oven/bun:slim as base
+FROM oven/bun:alpine as base
 WORKDIR /app
 
 #install dependencies
