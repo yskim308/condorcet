@@ -3,7 +3,7 @@ import cors from "cors";
 import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
 import { createClient } from "redis";
-import { router as hostRoutes } from "./routes/hostRoutes.js";
+import { router as hostRoutes } from "./routes/hostRoutes";
 
 const app = express();
 const server = createServer(app);

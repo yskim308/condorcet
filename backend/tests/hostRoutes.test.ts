@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
 import express from "express";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 
 // Mock dependencies before importing hostRoutes
 const mockRedisClient = {
@@ -10,6 +11,7 @@ const mockRedisClient = {
   lPush: mock(() => Promise.resolve()),
   incr: mock(() => Promise.resolve(0)),
   set: mock(() => Promise.resolve()),
+  hget: mock(() => Promise.resolve("testHost")),
 };
 
 const mockIo = {
@@ -29,11 +31,22 @@ const { router: hostRoutes } = await import("../routes/hostRoutes.js");
 
 describe("Host Routes", () => {
   let app: express.Application;
+  let validToken: string;
+  const secretKey = "test-secret-key";
 
   beforeEach(() => {
+    process.env.SECRET_KEY = secretKey;
+    
     app = express();
     app.use(express.json());
     app.use("/host", hostRoutes);
+
+    // Create a valid token for testing
+    validToken = jwt.sign(
+      { userName: "testHost", roomId: "room123" },
+      secretKey,
+      { expiresIn: "30m" }
+    );
 
     // Reset all mocks
     mockRedisClient.hSet.mockClear();
@@ -42,6 +55,7 @@ describe("Host Routes", () => {
     mockRedisClient.lPush.mockClear();
     mockRedisClient.incr.mockClear();
     mockRedisClient.set.mockClear();
+    mockRedisClient.hget.mockClear();
     mockIo.to.mockClear();
   });
 
@@ -86,11 +100,12 @@ describe("Host Routes", () => {
   });
 
   describe("POST /host/rooms/:roomId/nomination", () => {
-    it("should add a nominee successfully", async () => {
+    it("should add a nominee successfully with valid token", async () => {
       mockRedisClient.incr.mockResolvedValueOnce(0);
 
       const response = await request(app)
         .post("/host/rooms/room123/nomination")
+        .set("Authorization", `Bearer ${validToken}`)
         .send({
           nominee: "John Doe",
         });
@@ -111,9 +126,51 @@ describe("Host Routes", () => {
       expect(mockIo.to).toHaveBeenCalledWith("room123");
     });
 
+    it("should return 401 when no token is provided", async () => {
+      const response = await request(app)
+        .post("/host/rooms/room123/nomination")
+        .send({
+          nominee: "John Doe",
+        });
+
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe("No token provided");
+    });
+
+    it("should return 401 when invalid token is provided", async () => {
+      const response = await request(app)
+        .post("/host/rooms/room123/nomination")
+        .set("Authorization", "Bearer invalid-token")
+        .send({
+          nominee: "John Doe",
+        });
+
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe("Invalid token");
+    });
+
+    it("should return 403 when user is not the host", async () => {
+      const nonHostToken = jwt.sign(
+        { userName: "notHost", roomId: "room123" },
+        secretKey,
+        { expiresIn: "30m" }
+      );
+
+      const response = await request(app)
+        .post("/host/rooms/room123/nomination")
+        .set("Authorization", `Bearer ${nonHostToken}`)
+        .send({
+          nominee: "John Doe",
+        });
+
+      expect(response.status).toBe(403);
+      expect(response.body.error).toBe("client is not the host");
+    });
+
     it("should return 400 when nominee is missing", async () => {
       const response = await request(app)
         .post("/host/rooms/room123/nomination")
+        .set("Authorization", `Bearer ${validToken}`)
         .send({});
 
       expect(response.status).toBe(400);
@@ -125,6 +182,7 @@ describe("Host Routes", () => {
 
       const response = await request(app)
         .post("/host/rooms/nonexistent/nomination")
+        .set("Authorization", `Bearer ${validToken}`)
         .send({
           nominee: "John Doe",
         });
@@ -138,6 +196,7 @@ describe("Host Routes", () => {
 
       const response = await request(app)
         .post("/host/rooms/room123/nomination")
+        .set("Authorization", `Bearer ${validToken}`)
         .send({
           nominee: "Alice",
         });
@@ -162,16 +221,19 @@ describe("Host Routes", () => {
       // First nomination
       await request(app)
         .post("/host/rooms/room123/nomination")
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ nominee: "Alice" });
 
       // Second nomination  
       await request(app)
         .post("/host/rooms/room123/nomination")
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ nominee: "Bob" });
 
       // Third nomination
       await request(app)
         .post("/host/rooms/room123/nomination")
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ nominee: "Charlie" });
 
       expect(mockRedisClient.incr).toHaveBeenCalledTimes(3);
@@ -197,9 +259,10 @@ describe("Host Routes", () => {
   });
 
   describe("POST /host/rooms/:roomId/state", () => {
-    it("should update room state successfully", async () => {
+    it("should update room state successfully with valid token", async () => {
       const response = await request(app)
         .post("/host/rooms/room123/state")
+        .set("Authorization", `Bearer ${validToken}`)
         .send({
           state: "voting",
         });
@@ -217,12 +280,54 @@ describe("Host Routes", () => {
       expect(mockIo.to).toHaveBeenCalledWith("room123");
     });
 
+    it("should return 401 when no token is provided", async () => {
+      const response = await request(app)
+        .post("/host/rooms/room123/state")
+        .send({
+          state: "voting",
+        });
+
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe("No token provided");
+    });
+
+    it("should return 401 when invalid token is provided", async () => {
+      const response = await request(app)
+        .post("/host/rooms/room123/state")
+        .set("Authorization", "Bearer invalid-token")
+        .send({
+          state: "voting",
+        });
+
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe("Invalid token");
+    });
+
+    it("should return 403 when user is not the host", async () => {
+      const nonHostToken = jwt.sign(
+        { userName: "notHost", roomId: "room123" },
+        secretKey,
+        { expiresIn: "30m" }
+      );
+
+      const response = await request(app)
+        .post("/host/rooms/room123/state")
+        .set("Authorization", `Bearer ${nonHostToken}`)
+        .send({
+          state: "voting",
+        });
+
+      expect(response.status).toBe(403);
+      expect(response.body.error).toBe("client is not the host");
+    });
+
     it("should accept all valid states", async () => {
       const validStates = ["nominating", "voting", "done"];
 
       for (const state of validStates) {
         const response = await request(app)
           .post("/host/rooms/room123/state")
+          .set("Authorization", `Bearer ${validToken}`)
           .send({ state });
 
         expect(response.status).toBe(200);
@@ -233,6 +338,7 @@ describe("Host Routes", () => {
     it("should return 400 for invalid state", async () => {
       const response = await request(app)
         .post("/host/rooms/room123/state")
+        .set("Authorization", `Bearer ${validToken}`)
         .send({
           state: "invalid_state",
         });
@@ -246,6 +352,7 @@ describe("Host Routes", () => {
     it("should return 400 when state is missing", async () => {
       const response = await request(app)
         .post("/host/rooms/room123/state")
+        .set("Authorization", `Bearer ${validToken}`)
         .send({});
 
       expect(response.status).toBe(400);
@@ -259,6 +366,7 @@ describe("Host Routes", () => {
 
       const response = await request(app)
         .post("/host/rooms/nonexistent/state")
+        .set("Authorization", `Bearer ${validToken}`)
         .send({
           state: "voting",
         });
