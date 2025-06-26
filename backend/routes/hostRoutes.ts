@@ -8,15 +8,15 @@ const router = express.Router();
 
 interface createBody {
   roomName: string;
-  userId: string;
+  userName: string;
 }
 router.post(
   "/rooms/create",
   async (req: express.Request, res: express.Response) => {
     try {
-      const { roomName, userId }: createBody = req.body;
+      const { roomName, userName }: createBody = req.body;
 
-      if (!roomName || !userId) {
+      if (!roomName || !userName) {
         res.status(400).json({ error: "roomName and userId are required" });
         return;
       }
@@ -26,15 +26,15 @@ router.post(
       const roomData = {
         name: roomName,
         state: "nominating",
-        host: userId,
+        host: userName,
       };
 
       await redisClient.hSet(`room:${roomId}`, roomData);
-      await redisClient.sAdd(`room:${roomId}:users`, userId);
+      await redisClient.sAdd(`room:${roomId}:users`, userName);
 
       res.status(201).json({
-        roomId,
-        roomName,
+        roomId: roomId,
+        roomName: roomName,
         message: "Room created successfully",
       });
       return;
