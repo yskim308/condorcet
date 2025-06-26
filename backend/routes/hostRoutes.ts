@@ -6,11 +6,15 @@ type RoomState = "nominating" | "voting" | "done";
 
 const router = express.Router();
 
+interface createBody {
+  roomName: string;
+  userId: string;
+}
 router.post(
   "/rooms/create",
   async (req: express.Request, res: express.Response) => {
     try {
-      const { roomName, userId } = req.body;
+      const { roomName, userId }: createBody = req.body;
 
       if (!roomName || !userId) {
         res.status(400).json({ error: "roomName and userId are required" });
@@ -42,12 +46,15 @@ router.post(
   },
 );
 
+interface nominationBody {
+  nominee: string;
+}
 router.post(
   "/rooms/:roomId/nomination",
   async (req: express.Request, res: express.Response) => {
     try {
       const { roomId } = req.params;
-      const { nominee } = req.body;
+      const { nominee }: nominationBody = req.body;
 
       if (!nominee) {
         res.status(400).json({ error: "nominee is required" });
