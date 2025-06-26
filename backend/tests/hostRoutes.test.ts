@@ -8,6 +8,8 @@ const mockRedisClient = {
   sAdd: mock(() => Promise.resolve()),
   exists: mock(() => Promise.resolve(1)),
   lPush: mock(() => Promise.resolve()),
+  incr: mock(() => Promise.resolve(0)),
+  set: mock(() => Promise.resolve()),
 };
 
 const mockIo = {
@@ -38,6 +40,8 @@ describe("Host Routes", () => {
     mockRedisClient.sAdd.mockClear();
     mockRedisClient.exists.mockClear();
     mockRedisClient.lPush.mockClear();
+    mockRedisClient.incr.mockClear();
+    mockRedisClient.set.mockClear();
     mockIo.to.mockClear();
   });
 
@@ -45,7 +49,7 @@ describe("Host Routes", () => {
     it("should create a room successfully", async () => {
       const response = await request(app).post("/host/rooms/create").send({
         roomName: "Test Room",
-        userId: "user123",
+        userName: "user123",
       });
 
       expect(response.status).toBe(201);
@@ -56,18 +60,22 @@ describe("Host Routes", () => {
       expect(response.body.roomId).toBeDefined();
       expect(mockRedisClient.hSet).toHaveBeenCalled();
       expect(mockRedisClient.sAdd).toHaveBeenCalled();
+      expect(mockRedisClient.set).toHaveBeenCalledWith(
+        expect.stringMatching(/^room:.+:nominee_count$/),
+        -1
+      );
     });
 
     it("should return 400 when roomName is missing", async () => {
       const response = await request(app).post("/host/rooms/create").send({
-        userId: "user123",
+        userName: "user123",
       });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe("roomName and userId are required");
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 400 when userName is missing", async () => {
       const response = await request(app).post("/host/rooms/create").send({
         roomName: "Test Room",
       });
@@ -79,6 +87,8 @@ describe("Host Routes", () => {
 
   describe("POST /host/rooms/:roomId/nomination", () => {
     it("should add a nominee successfully", async () => {
+      mockRedisClient.incr.mockResolvedValueOnce(0);
+
       const response = await request(app)
         .post("/host/rooms/room123/nomination")
         .send({
@@ -90,8 +100,12 @@ describe("Host Routes", () => {
         message: "Nominee added successfully",
         nominee: "John Doe",
       });
-      expect(mockRedisClient.lPush).toHaveBeenCalledWith(
+      expect(mockRedisClient.incr).toHaveBeenCalledWith(
+        "room:room123:nominee_count"
+      );
+      expect(mockRedisClient.hSet).toHaveBeenCalledWith(
         "room:room123:nominees",
+        "0",
         "John Doe",
       );
       expect(mockIo.to).toHaveBeenCalledWith("room123");
@@ -117,6 +131,68 @@ describe("Host Routes", () => {
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe("Room not found");
+    });
+
+    it("should generate sequential nominee IDs", async () => {
+      mockRedisClient.incr.mockResolvedValueOnce(0);
+
+      const response = await request(app)
+        .post("/host/rooms/room123/nomination")
+        .send({
+          nominee: "Alice",
+        });
+
+      expect(response.status).toBe(200);
+      expect(mockRedisClient.incr).toHaveBeenCalledWith(
+        "room:room123:nominee_count"
+      );
+      expect(mockRedisClient.hSet).toHaveBeenCalledWith(
+        "room:room123:nominees",
+        "0",
+        "Alice"
+      );
+    });
+
+    it("should increment nominee counter for multiple nominations", async () => {
+      mockRedisClient.incr
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(1)
+        .mockResolvedValueOnce(2);
+
+      // First nomination
+      await request(app)
+        .post("/host/rooms/room123/nomination")
+        .send({ nominee: "Alice" });
+
+      // Second nomination  
+      await request(app)
+        .post("/host/rooms/room123/nomination")
+        .send({ nominee: "Bob" });
+
+      // Third nomination
+      await request(app)
+        .post("/host/rooms/room123/nomination")
+        .send({ nominee: "Charlie" });
+
+      expect(mockRedisClient.incr).toHaveBeenCalledTimes(3);
+      expect(mockRedisClient.hSet).toHaveBeenNthCalledWith(
+        1,
+        "room:room123:nominees",
+        "0",
+        "Alice"
+      );
+      expect(mockRedisClient.hSet).toHaveBeenNthCalledWith(
+        2,
+        "room:room123:nominees", 
+        "1",
+        "Bob"
+      );
+      expect(mockRedisClient.hSet).toHaveBeenNthCalledWith(
+        3,
+        "room:room123:nominees",
+        "2", 
+        "Charlie"
+      );
     });
   });
 
