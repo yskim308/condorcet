@@ -12,7 +12,9 @@ if (!port) {
   throw new Error("port not defined in secrets");
 }
 
-export const redisClient = createClient();
+export const redisClient = createClient({
+  url: "redis://redis:6379",
+});
 redisClient.connect();
 
 app.use(cors());
