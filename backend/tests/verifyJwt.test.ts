@@ -1,51 +1,9 @@
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+// Set environment variable at the very top before any imports
+process.env.SECRET_KEY = "test-secret-key";
+
+import { describe, it, expect, beforeEach, mock, afterEach } from "bun:test";
 import express from "express";
 import jwt from "jsonwebtoken";
-
-// Mock the middleware module to use our test secret
-mock.module("../middleware/verifyJwt.js", () => {
-  const secretKey = "test-secret-key";
-  
-  return {
-    verifyJwt: (
-      req: express.Request,
-      res: express.Response,
-      next: express.NextFunction,
-    ) => {
-      try {
-        const authHeader = req.headers.authorization;
-
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          res.status(401).json({ error: "No token provided" });
-          return;
-        }
-
-        const token = authHeader.substring(7);
-
-        const decoded = jwt.verify(token, secretKey) as { userName: string; roomId: string };
-
-        req.body.userName = decoded.userName;
-        req.body.roomId = decoded.roomId;
-
-        next();
-      } catch (error) {
-        if (error instanceof jwt.TokenExpiredError) {
-          res.status(401).json({ error: "Token expired" });
-          return;
-        }
-        if (error instanceof jwt.JsonWebTokenError) {
-          res.status(401).json({ error: "Invalid token" });
-          return;
-        }
-        res.status(500).json({ error: "Token verification failed" });
-        return;
-      }
-    }
-  };
-});
-
-// Import after mocking
-const { verifyJwt } = await import("../middleware/verifyJwt.js");
 
 describe("verifyJwt Middleware", () => {
   let req: Partial<express.Request>;
@@ -53,10 +11,16 @@ describe("verifyJwt Middleware", () => {
   let next: express.NextFunction;
   let jsonMock: any;
   let statusMock: any;
+  let verifyJwt: any;
   const secretKey = "test-secret-key";
 
-  beforeEach(() => {
-    process.env.SECRET_KEY = secretKey;
+  beforeEach(async () => {
+    // Clear the module cache to ensure fresh import
+    delete require.cache[require.resolve("../middleware/verifyJwt.js")];
+    
+    // Import the middleware fresh each time
+    const module = await import("../middleware/verifyJwt.js?" + Date.now());
+    verifyJwt = module.verifyJwt;
 
     jsonMock = mock(() => res);
     statusMock = mock(() => res);
@@ -69,7 +33,7 @@ describe("verifyJwt Middleware", () => {
     res = {
       status: statusMock,
       json: jsonMock,
-    };
+    } as express.Response;
 
     next = mock(() => {});
 
@@ -217,4 +181,3 @@ describe("verifyJwt Middleware", () => {
     expect(req.body?.roomId).toBeUndefined();
   });
 });
-
