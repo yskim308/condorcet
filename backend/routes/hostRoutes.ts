@@ -14,6 +14,7 @@ router.post(
 
       if (!roomName || !userId) {
         res.status(400).json({ error: "roomName and userId are required" });
+        return;
       }
 
       const roomId = randomBytes(8).toString("hex");
@@ -32,9 +33,11 @@ router.post(
         roomName,
         message: "Room created successfully",
       });
+      return;
     } catch (error) {
       console.error("Error creating room:", error);
       res.status(500).json({ error: "Failed to create room" });
+      return;
     }
   },
 );
@@ -48,11 +51,13 @@ router.post(
 
       if (!nominee) {
         res.status(400).json({ error: "nominee is required" });
+        return;
       }
 
       const roomExists = await redisClient.exists(`room:${roomId}`);
       if (!roomExists) {
         res.status(404).json({ error: "Room not found" });
+        return;
       }
 
       await redisClient.lPush(`room:${roomId}:nominees`, nominee);
@@ -63,9 +68,11 @@ router.post(
         message: "Nominee added successfully",
         nominee,
       });
+      return;
     } catch (error) {
       console.error("Error adding nominee:", error);
       res.status(500).json({ error: "Failed to add nominee" });
+      return;
     }
   },
 );
@@ -82,11 +89,13 @@ router.post(
           error:
             "state is required and must be 'nominating', 'voting', or 'done'",
         });
+        return;
       }
 
       const roomExists = await redisClient.exists(`room:${roomId}`);
       if (!roomExists) {
         res.status(404).json({ error: "room not found" });
+        return;
       }
 
       await redisClient.hSet(`room:${roomId}`, "state", state);
@@ -97,9 +106,11 @@ router.post(
         message: "Room state updated successfully",
         state,
       });
+      return;
     } catch (error) {
       console.error("Error updating room state:", error);
       res.status(500).json({ error: "Failed to update room state" });
+      return;
     }
   },
 );
