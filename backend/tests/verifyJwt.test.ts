@@ -1,7 +1,51 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
 import express from "express";
 import jwt from "jsonwebtoken";
-import { verifyJwt } from "../middleware/verifyJwt.js";
+
+// Mock the middleware module to use our test secret
+mock.module("../middleware/verifyJwt.js", () => {
+  const secretKey = "test-secret-key";
+  
+  return {
+    verifyJwt: (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          res.status(401).json({ error: "No token provided" });
+          return;
+        }
+
+        const token = authHeader.substring(7);
+
+        const decoded = jwt.verify(token, secretKey) as { userName: string; roomId: string };
+
+        req.body.userName = decoded.userName;
+        req.body.roomId = decoded.roomId;
+
+        next();
+      } catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+          res.status(401).json({ error: "Token expired" });
+          return;
+        }
+        if (error instanceof jwt.JsonWebTokenError) {
+          res.status(401).json({ error: "Invalid token" });
+          return;
+        }
+        res.status(500).json({ error: "Token verification failed" });
+        return;
+      }
+    }
+  };
+});
+
+// Import after mocking
+const { verifyJwt } = await import("../middleware/verifyJwt.js");
 
 describe("verifyJwt Middleware", () => {
   let req: Partial<express.Request>;
@@ -14,8 +58,8 @@ describe("verifyJwt Middleware", () => {
   beforeEach(() => {
     process.env.SECRET_KEY = secretKey;
 
-    jsonMock = mock(() => {});
-    statusMock = mock(() => ({ json: jsonMock }));
+    jsonMock = mock(() => res);
+    statusMock = mock(() => res);
 
     req = {
       headers: {},

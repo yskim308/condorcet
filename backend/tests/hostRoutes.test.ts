@@ -3,6 +3,9 @@ import express from "express";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 
+// Set environment variable before importing anything
+process.env.SECRET_KEY = "test-secret-key";
+
 // Mock dependencies before importing hostRoutes
 const mockRedisClient = {
   hSet: mock(() => Promise.resolve()),

@@ -33,12 +33,12 @@ export const verifyJwt = (
 
     next();
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).json({ error: "Invalid token" });
-      return;
-    }
     if (error instanceof jwt.TokenExpiredError) {
       res.status(401).json({ error: "Token expired" });
+      return;
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: "Invalid token" });
       return;
     }
     res.status(500).json({ error: "Token verification failed" });
