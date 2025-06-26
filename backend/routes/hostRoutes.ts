@@ -31,6 +31,7 @@ router.post(
 
       await redisClient.hSet(`room:${roomId}`, roomData);
       await redisClient.sAdd(`room:${roomId}:users`, userName);
+      await redisClient.set(`room:${roomId}:nominee_count`, -1); // 0 index nominees
 
       res.status(201).json({
         roomId: roomId,
@@ -67,7 +68,14 @@ router.post(
         return;
       }
 
-      await redisClient.lPush(`room:${roomId}:nominees`, nominee);
+      const nomineed_id = await redisClient.incr(
+        `room:${roomId}:nominee_count`,
+      );
+      await redisClient.hSet(
+        `room:${roomId}:nominees`,
+        nomineed_id.toString(),
+        nominee,
+      );
 
       io.to(roomId).emit("new-nomination", { nominee, roomId });
 
