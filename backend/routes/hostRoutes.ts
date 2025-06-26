@@ -2,6 +2,8 @@ import express from "express";
 import { redisClient, io } from "../index.js";
 import { randomBytes } from "crypto";
 
+type RoomState = "nominating" | "voting" | "done";
+
 const router = express.Router();
 
 router.post(
@@ -20,7 +22,6 @@ router.post(
         name: roomName,
         state: "nominating",
         host: userId,
-        createdAt: new Date().toISOString(),
       };
 
       await redisClient.hSet(`room:${roomId}`, roomData);
@@ -65,6 +66,40 @@ router.post(
     } catch (error) {
       console.error("Error adding nominee:", error);
       res.status(500).json({ error: "Failed to add nominee" });
+    }
+  },
+);
+
+router.post(
+  "/rooms/:roomId/state",
+  async (req: express.Request, res: express.Response) => {
+    try {
+      const { roomId } = req.params;
+      const { state }: { state: RoomState } = req.body;
+
+      if (!state || !["nominating", "voting", "done"].includes(state)) {
+        res.status(400).json({
+          error:
+            "state is required and must be 'nominating', 'voting', or 'done'",
+        });
+      }
+
+      const roomExists = await redisClient.exists(`room:${roomId}`);
+      if (!roomExists) {
+        res.status(404).json({ error: "room not found" });
+      }
+
+      await redisClient.hSet(`room:${roomId}`, "state", state);
+
+      io.to(roomId).emit("state-change", { state, roomId });
+
+      res.status(200).json({
+        message: "Room state updated successfully",
+        state,
+      });
+    } catch (error) {
+      console.error("Error updating room state:", error);
+      res.status(500).json({ error: "Failed to update room state" });
     }
   },
 );
