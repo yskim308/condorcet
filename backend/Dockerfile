@@ -4,13 +4,14 @@ WORKDIR /app
 
 #install dependencies
 FROM base as deps
-COPY package*.json ./
-COPY bun*.lockb ./
-RUN bun install
+COPY package.json ./
+COPY bun.lock ./
+RUN bun install --frozen-lockfile
 
 # development stage
-FROM deps as development
+FROM base as development
 COPY . .
+# note: installation of dependncies will happen IN container
 EXPOSE 4000
 CMD ["bun", "--watch", "index.ts"]
 

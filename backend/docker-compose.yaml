@@ -23,6 +23,9 @@ services:
       # This is CRUCIAL for Node.js/bun dev experience with volumes.
       - /app/node_modules
 
+    command: 
+      sh -c "bun install && bun --watch index.ts"
+
 
   redis:
     image: "redis:latest" # Use the latest Redis image
