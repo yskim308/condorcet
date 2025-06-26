@@ -1,6 +1,7 @@
 import express from "express";
 import { redisClient, io } from "../index.js";
 import { randomBytes } from "crypto";
+import jwt from "jsonwebtoken";
 
 type RoomState = "nominating" | "voting" | "done";
 
@@ -32,6 +33,12 @@ router.post(
       await redisClient.hSet(`room:${roomId}`, roomData);
       await redisClient.sAdd(`room:${roomId}:users`, userName);
       await redisClient.set(`room:${roomId}:nominee_count`, -1); // 0 index nominees
+
+      const payload = {
+        userName: userName,
+        roomId: roomId,
+      };
+      // todoo : sign the payload and send it back in the response
 
       res.status(201).json({
         roomId: roomId,
