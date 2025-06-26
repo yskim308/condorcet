@@ -1,6 +1,7 @@
 import express from "express";
 import { redisClient, io } from "../index.js";
 import { randomBytes } from "crypto";
+import { verifyJwt } from "../middleware/verifyJwt.js";
 import jwt from "jsonwebtoken";
 
 type RoomState = "nominating" | "voting" | "done";
@@ -42,7 +43,6 @@ router.post(
         userName: userName,
         roomId: roomId,
       };
-      // todoo : sign the payload and send it back in the response
 
       const token = jwt.sign(payload, secretKey, { expiresIn: "30m" });
       res.status(201).json({
@@ -62,14 +62,19 @@ router.post(
 
 interface nominationBody {
   nominee: string;
+  userName?: string;
 }
 router.post(
   "/rooms/:roomId/nomination",
+  verifyJwt,
   async (req: express.Request, res: express.Response) => {
     try {
       const { roomId } = req.params;
-      const { nominee }: nominationBody = req.body;
+      const { nominee, userName }: nominationBody = req.body;
 
+      if (!userName) {
+        res.status(401).json({ error: "no username from middleware" });
+      }
       if (!nominee) {
         res.status(400).json({ error: "nominee is required" });
         return;
@@ -79,6 +84,11 @@ router.post(
       if (!roomExists) {
         res.status(404).json({ error: "Room not found" });
         return;
+      }
+
+      const host = await redisClient.hget(`room:${roomId}`, "host");
+      if (userName != host) {
+        res.status(403).json({ error: "client is not the host" });
       }
 
       const nomineed_id = await redisClient.incr(
@@ -105,12 +115,21 @@ router.post(
   },
 );
 
+interface StateBody {
+  state: RoomState;
+  userName?: string;
+}
 router.post(
   "/rooms/:roomId/state",
+  verifyJwt,
   async (req: express.Request, res: express.Response) => {
     try {
       const { roomId } = req.params;
-      const { state }: { state: RoomState } = req.body;
+      const { state, userName }: StateBody = req.body;
+
+      if (!userName) {
+        res.status(401).json({ error: "no username from middleware" });
+      }
 
       if (!state || !["nominating", "voting", "done"].includes(state)) {
         res.status(400).json({
@@ -124,6 +143,11 @@ router.post(
       if (!roomExists) {
         res.status(404).json({ error: "room not found" });
         return;
+      }
+
+      const host = await redisClient.hget(`room:${roomId}`, "host");
+      if (userName != host) {
+        res.status(403).json({ error: "client is not the host" });
       }
 
       await redisClient.hSet(`room:${roomId}`, "state", state);
