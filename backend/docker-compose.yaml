@@ -23,3 +23,15 @@ services:
       # This is CRUCIAL for Node.js/bun dev experience with volumes.
       - /app/node_modules
 
+
+  redis:
+    image: "redis:latest" # Use the latest Redis image
+    ports:
+      - "6379:6379" # Map host port 6379 to container port 6379 (Redis default port)
+    command: redis-server --appendonly yes # Optional: Enable AOF persistence for Redis
+    volumes:
+      - redis_data:/data # Mount a named volume for Redis data persistence
+
+volumes:
+  redis_data: # Define the named volume for Redis data
+
