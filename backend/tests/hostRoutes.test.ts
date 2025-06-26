@@ -1,9 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 import express from "express";
 import request from "supertest";
-import { router as hostRoutes } from "../routes/hostRoutes.js";
 
-// Mock dependencies
+// Mock dependencies before importing hostRoutes
 const mockRedisClient = {
   hSet: mock(() => Promise.resolve()),
   sAdd: mock(() => Promise.resolve()),
@@ -17,11 +16,14 @@ const mockIo = {
   })),
 };
 
-// Mock the index.js imports
+// Mock the index.js imports before importing the router
 mock.module("../index.js", () => ({
   redisClient: mockRedisClient,
   io: mockIo,
 }));
+
+// Import after mocking
+const { router: hostRoutes } = await import("../routes/hostRoutes.js");
 
 describe("Host Routes", () => {
   let app: express.Application;
