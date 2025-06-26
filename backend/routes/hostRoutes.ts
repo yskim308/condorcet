@@ -6,6 +6,10 @@ import jwt from "jsonwebtoken";
 type RoomState = "nominating" | "voting" | "done";
 
 const router = express.Router();
+const secretKey = process.env.SECRET_KEY;
+if (!secretKey) {
+  throw new Error("secret key not defiend in .env");
+}
 
 interface createBody {
   roomName: string;
@@ -40,10 +44,12 @@ router.post(
       };
       // todoo : sign the payload and send it back in the response
 
+      const token = jwt.sign(payload, secretKey, { expiresIn: "30m" });
       res.status(201).json({
         roomId: roomId,
         roomName: roomName,
         message: "Room created successfully",
+        token: token,
       });
       return;
     } catch (error) {
