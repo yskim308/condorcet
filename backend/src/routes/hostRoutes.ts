@@ -1,5 +1,6 @@
 import express from "express";
-import { redisClient, io } from "../index";
+import { io } from "../index";
+import { redisClient } from "../config/redisClient";
 import { randomBytes } from "crypto";
 
 type RoomState = "nominating" | "voting" | "done";

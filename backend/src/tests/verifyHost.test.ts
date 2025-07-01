@@ -12,7 +12,7 @@ const mockRedisClient = {
   }),
 };
 
-mock.module("../index.js", () => ({
+mock.module("../config/redisClient", () => ({
   redisClient: mockRedisClient,
 }));
 

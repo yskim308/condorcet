@@ -1,5 +1,5 @@
 import express from "express";
-import { redisClient } from "../index.js";
+import { redisClient } from "../config/redisClient";
 
 export const verifyHost = async (
   req: express.Request,

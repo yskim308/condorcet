@@ -26,8 +26,11 @@ const mockIo = {
 
 // Mock the index.js imports before importing the router
 mock.module("../index", () => ({
-  redisClient: mockRedisClient,
   io: mockIo,
+}));
+
+mock.module("../config/redisClient", () => ({
+  redisClient: mockRedisClient,
 }));
 
 // Import after mocking
