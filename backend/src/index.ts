@@ -4,7 +4,7 @@ import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
 import { createClient } from "redis";
 import { router as hostRoutes } from "./routes/hostRoutes";
-import { router as participantRoutes } from "./routes/participantRoutes.js";
+import { router as participantRoutes } from "./routes/participantRoutes";
 
 const app = express();
 const server = createServer(app);
@@ -20,14 +20,13 @@ redisClient.connect();
 
 app.use(cors());
 app.use(express.json());
-const io = new Server(server, {
+app.use("/host", hostRoutes);
+app.use("/participant", participantRoutes);
+export const io = new Server(server, {
   cors: {
     origin: "*",
   },
 });
-
-app.use("/host", hostRoutes);
-app.use("/participant", participantRoutes);
 
 app.get("/", (req: express.Request, res: express.Response) => {
   res.send("<h1>Hello world</h1>");
@@ -45,8 +44,6 @@ io.on("connection", (socket: Socket) => {
     console.log("User disconnected:", socket.id);
   });
 });
-
-export { io };
 
 server.listen(port, () => {
   console.log(`lisetning on port: ${port}`);

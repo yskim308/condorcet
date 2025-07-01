@@ -25,13 +25,13 @@ const mockIo = {
 };
 
 // Mock the index.js imports before importing the router
-mock.module("../index.js", () => ({
+mock.module("../index", () => ({
   redisClient: mockRedisClient,
   io: mockIo,
 }));
 
 // Import after mocking
-const { router: hostRoutes } = await import("../routes/hostRoutes.js");
+const { router: hostRoutes } = await import("../routes/hostRoutes");
 
 describe("Host Routes", () => {
   let app: express.Application;
@@ -213,4 +213,3 @@ describe("Host Routes", () => {
     });
   });
 });
-
