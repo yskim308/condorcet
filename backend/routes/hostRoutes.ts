@@ -1,12 +1,12 @@
 import express from "express";
-import { redisClient, io } from "../index.js";
+import { redisClient, io } from "../index";
 import { randomBytes } from "crypto";
 
 type RoomState = "nominating" | "voting" | "done";
 
 const router = express.Router();
 
-import { verifyHost } from "../middleware/verifyHost.js";
+import { verifyHost } from "../middleware/verifyHost";
 
 interface createBody {
   roomName: string;
