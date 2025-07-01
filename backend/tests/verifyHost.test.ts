@@ -63,7 +63,9 @@ describe("verifyHost Middleware", () => {
   });
 
   it("should return 500 if redis throws an error", async () => {
-    mockRedisClient.hGet.mockRejectedValueOnce(new Error("Redis error"));
+    mockRedisClient.hGet = mock(() => {
+      return Promise.reject(new Error("redis error"));
+    }) as typeof mockRedisClient.hGet;
 
     const response = await request(app).post("/test/room123").send({
       hostKey: "test-host-key",
