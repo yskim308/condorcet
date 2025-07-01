@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
-import { createClient } from "redis";
 import { router as hostRoutes } from "./routes/hostRoutes";
 import { router as participantRoutes } from "./routes/participantRoutes";
 
@@ -12,11 +11,6 @@ const port = process.env.PORT;
 if (!port) {
   throw new Error("port not defined in secrets");
 }
-
-export const redisClient = createClient({
-  url: "redis://redis:6379",
-});
-redisClient.connect();
 
 app.use(cors());
 app.use(express.json());
