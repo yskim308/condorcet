@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
 import { createClient } from "redis";
 import { router as hostRoutes } from "./routes/hostRoutes";
+import { router as participantRoutes } from "./routes/participantRoutes.js";
 
 const app = express();
 const server = createServer(app);
@@ -26,6 +27,7 @@ const io = new Server(server, {
 });
 
 app.use("/host", hostRoutes);
+app.use("/participant", participantRoutes);
 
 app.get("/", (req: express.Request, res: express.Response) => {
   res.send("<h1>Hello world</h1>");
