@@ -13,12 +13,12 @@ FROM base as development
 COPY . .
 # note: installation of dependncies will happen IN container
 EXPOSE 4000
-CMD ["bun", "--watch", "index.ts"]
+CMD ["bun", "--watch", "src/index.ts"]
 
 # build stage
 FROM deps as build
 COPY . .
-RUN bun build ./index.ts --outdir ./dist --target=bun
+RUN bun build ./src/index.ts --outdir ./dist --target=bun
 
 # runtime 
 FROM base as release
