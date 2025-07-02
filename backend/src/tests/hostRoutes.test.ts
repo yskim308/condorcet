@@ -94,6 +94,20 @@ describe("Host Routes", () => {
       expect(response.status).toBe(400);
       expect(response.body.error).toBe("roomName and userId are required");
     });
+
+    it("should handle Redis errors gracefully during room creation", async () => {
+      mockRedisClient.hSet = mock(() => {
+        return Promise.reject(new Error("redis error"));
+      }) as typeof mockRedisClient.hSet;
+
+      const response = await request(app).post("/host/rooms/create").send({
+        roomName: "Test Room",
+        userName: "user123",
+      });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe("Failed to create room");
+    });
   });
 
   describe("POST /host/rooms/:roomId/nomination", () => {
@@ -154,6 +168,22 @@ describe("Host Routes", () => {
       expect(response.status).toBe(400);
       expect(response.body.error).toBe("nominee is required");
     });
+
+    it("should handle Redis errors gracefully during nomination", async () => {
+      mockRedisClient.incr = mock(() => {
+        return Promise.reject(new Error("redis error"));
+      }) as typeof mockRedisClient.incr;
+
+      const response = await request(app)
+        .post("/host/rooms/room123/nomination")
+        .send({
+          nominee: "John Doe",
+          hostKey: "test-host-key",
+        });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe("Failed to add nominee");
+    });
   });
 
   describe("POST /host/rooms/:roomId/state", () => {
@@ -213,6 +243,22 @@ describe("Host Routes", () => {
       expect(response.body.error).toBe(
         "state is required and must be 'nominating', 'voting', or 'done'",
       );
+    });
+
+    it("should handle Redis errors gracefully during state update", async () => {
+      mockRedisClient.hSet = mock(() => {
+        return Promise.reject(new Error("redis error"));
+      }) as typeof mockRedisClient.hSet;
+
+      const response = await request(app)
+        .post("/host/rooms/room123/state")
+        .send({
+          state: "voting",
+          hostKey: "test-host-key",
+        });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe("Failed to update room state");
     });
   });
 });
