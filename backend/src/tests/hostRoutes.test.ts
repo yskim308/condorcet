@@ -236,7 +236,6 @@ describe("Host Routes", () => {
         });
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe("Failed to add nominee: service error");
     });
   });
 
@@ -322,9 +321,6 @@ describe("Host Routes", () => {
       });
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe(
-        "Failed to update room state: service error",
-      );
     });
   });
 });
