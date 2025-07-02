@@ -49,5 +49,30 @@ export class RoomService {
       return [err, "", code];
     }
   }
-  // @todo: exists
+
+  async exists(roomId: string): Promise<[Error | null, boolean, number]> {
+    try {
+      const roomExists = await redisClient.exists(`room:${roomId}`);
+      return [null, roomExists === 1, 200];
+    } catch (error: unknown) {
+      console.error("error getting room state: " + getErrorMessage(error));
+      const [err, code] = getRedisError(error);
+      return [err, false, code];
+    }
+  }
+
+  async getHostKey(roomId: string): Promise<[Error | null, string, number]> {
+    try {
+      const hostKey = await redisClient.hget(`room:${roomId}`, "hostKey");
+      if (hostKey) {
+        return [null, String(hostKey), 200];
+      } else {
+        return [new Error("no hostkey or room not found"), "", 404];
+      }
+    } catch (error) {
+      console.error("error getting hostkey: " + getErrorMessage(error));
+      const [err, code] = getRedisError(error);
+      return [err, "", code];
+    }
+  }
 }
