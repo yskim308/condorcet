@@ -51,7 +51,7 @@ router.post(
         console.error(`Error creating room ${roomId}: ${err1.message}`);
         res
           .status(code1)
-          .json({ error: `Failed to create room: ${err1.message}` });
+          .json({ error: `redis failed to create room: ${err1.message}` });
         return;
       }
 
@@ -62,7 +62,7 @@ router.post(
         );
         res
           .status(code2)
-          .json({ error: `Failed to enroll user: ${err2.message}` });
+          .json({ error: `redis failed to enroll user: ${err2.message}` });
         return;
       }
 
@@ -72,7 +72,7 @@ router.post(
           `Error setting nominee count for room ${roomId}: ${err3.message}`,
         );
         res.status(code3).json({
-          error: `Failed to initialize nominee count: ${err3.message}`,
+          error: `redis failed to initialize nominee count: ${err3.message}`,
         });
         return;
       }
@@ -112,7 +112,7 @@ router.post(
       if (err) {
         res
           .status(code)
-          .json({ error: `Failed to add nominee: ${err.message}` });
+          .json({ error: `redis failed to add nominee: ${err.message}` });
         return;
       }
 
@@ -155,7 +155,7 @@ router.post(
       if (err) {
         res
           .status(code)
-          .json({ error: `Failed to update room state: ${err.message}` });
+          .json({ error: `redis failed to update room state: ${err.message}` });
         return;
       }
 
