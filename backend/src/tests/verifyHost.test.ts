@@ -2,22 +2,25 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 import express from "express";
 import request from "supertest";
 
-// Mock dependencies before importing verifyHost
-const mockRedisClient = {
-  hGet: mock((key: string, field: string) => {
-    if (key === "room:room123" && field === "hostKey") {
-      return Promise.resolve("test-host-key");
+// Mock RoomService
+const mockRoomService = {
+  getHostKey: mock(async (roomId: string) => {
+    if (roomId === "room123") {
+      return [null, "test-host-key", 200];
     }
-    return Promise.resolve(null);
+    return [new Error("Room not found"), null, 404];
   }),
 };
 
-mock.module("../config/redisClient", () => ({
-  redisClient: mockRedisClient,
+mock.module("../config/RoomService", () => ({
+  __esModule: true,
+  default: function () {
+    return mockRoomService;
+  },
 }));
 
 // Import after mocking
-const { verifyHost } = await import("../middleware/verifyHost.js");
+const { verifyHost } = await import("../middleware/verifyHost");
 
 describe("verifyHost Middleware", () => {
   let app: express.Application;
@@ -30,7 +33,7 @@ describe("verifyHost Middleware", () => {
     });
 
     // Reset mocks
-    mockRedisClient.hGet.mockClear();
+    mockRoomService.getHostKey.mockClear();
   });
 
   it("should call next() if host key is valid", async () => {
@@ -40,10 +43,7 @@ describe("verifyHost Middleware", () => {
 
     expect(response.status).toBe(200);
     expect(response.text).toBe("OK");
-    expect(mockRedisClient.hGet).toHaveBeenCalledWith(
-      "room:room123",
-      "hostKey",
-    );
+    expect(mockRoomService.getHostKey).toHaveBeenCalledWith("room123");
   });
 
   it("should return 401 if no host key is provided", async () => {
@@ -62,10 +62,12 @@ describe("verifyHost Middleware", () => {
     expect(response.body.error).toBe("invalid host key");
   });
 
-  it("should return 500 if redis throws an error", async () => {
-    mockRedisClient.hGet = mock(() => {
-      return Promise.reject(new Error("redis error"));
-    }) as typeof mockRedisClient.hGet;
+  it("should return 500 if the service throws an error", async () => {
+    mockRoomService.getHostKey.mockResolvedValueOnce([
+      new Error("service error"),
+      null,
+      500,
+    ]);
 
     const response = await request(app).post("/test/room123").send({
       hostKey: "test-host-key",
@@ -75,3 +77,4 @@ describe("verifyHost Middleware", () => {
     expect(response.body.error).toBe("host key verification failed");
   });
 });
+
