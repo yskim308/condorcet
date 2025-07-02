@@ -46,10 +46,36 @@ router.post(
         hostKey: hostKey,
       };
 
-      await roomService.createRoom(roomId, roomData);
-      await userRoomService.enrollUser(roomId, userName);
-      await nomineeService.setNomineeCount(roomId);
+      const [err1, code1] = await roomService.createRoom(roomId, roomData);
+      if (err1) {
+        console.error(`Error creating room ${roomId}: ${err1.message}`);
+        res
+          .status(code1)
+          .json({ error: `Failed to create room: ${err1.message}` });
+        return;
+      }
 
+      const [err2, code2] = await userRoomService.enrollUser(roomId, userName);
+      if (err2) {
+        console.error(
+          `Error enrolling user ${userName} in room ${roomId}: ${err2.message}`,
+        );
+        res
+          .status(code2)
+          .json({ error: `Failed to enroll user: ${err2.message}` });
+        return;
+      }
+
+      const [err3, code3] = await nomineeService.setNomineeCount(roomId);
+      if (err3) {
+        console.error(
+          `Error setting nominee count for room ${roomId}: ${err3.message}`,
+        );
+        res.status(code3).json({
+          error: `Failed to initialize nominee count: ${err3.message}`,
+        });
+        return;
+      }
       res.status(201).json({
         roomId: roomId,
         roomName: roomName,
@@ -82,7 +108,13 @@ router.post(
         return;
       }
 
-      await nomineeService.addNominee(roomId, nominee);
+      const [err, code] = await nomineeService.addNominee(roomId, nominee);
+      if (err) {
+        res
+          .status(code)
+          .json({ error: `Failed to add nominee: ${err.message}` });
+        return;
+      }
 
       io.to(roomId).emit("new-nomination", { nominee, roomId });
 
@@ -119,7 +151,13 @@ router.post(
         return;
       }
 
-      await roomService.updateState(roomId, state);
+      const [err, code] = await roomService.updateState(roomId, state);
+      if (err) {
+        res
+          .status(code)
+          .json({ error: `Failed to update room state: ${err.message}` });
+        return;
+      }
 
       io.to(roomId).emit("state-change", { state, roomId });
 
