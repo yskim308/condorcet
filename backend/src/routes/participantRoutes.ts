@@ -1,11 +1,9 @@
 import express from "express";
 import { io } from "../index";
 import UserRoomService from "../config/UserRoomService";
-import NomineeService from "../config/NomineeService";
 import RoomService from "../config/RoomService";
 
 const roomService = new RoomService();
-const nomineeService = new NomineeService();
 const userRoomService = new UserRoomService();
 
 const router = express.Router();
@@ -25,19 +23,45 @@ router.post(
         return;
       }
 
-      const roomExists = await redisClient.exists(`room:${roomId}`);
+      // check if room exists
+      const [existsErr, roomExists, codeExists] =
+        await roomService.exists(roomId);
+      if (existsErr) {
+        res.status(codeExists).json({
+          error: `Failed to check if room exists: ${existsErr.message}`,
+        });
+        return;
+      }
       if (!roomExists) {
         res.status(404).json({ error: "Room not found" });
         return;
       }
 
-      const roomState = await redisClient.hGet(`room:${roomId}`, "state");
+      // check if the state of the room is 'nominating'
+      const [stateErr, roomState, codeState] =
+        await roomService.getState(roomId);
+      if (stateErr) {
+        res
+          .status(codeState)
+          .json({ error: `Failed to get room state: ${stateErr.message}` });
+        return;
+      }
       if (roomState !== "nominating") {
         res.status(403).json({ error: "Room is not in a joinable state" });
         return;
       }
 
-      await redisClient.sAdd(`room:${roomId}:users`, userName);
+      // 'join' the user to the room
+      const [enrollErr, codeEnroll] = await userRoomService.enrollUser(
+        roomId,
+        userName,
+      );
+      if (enrollErr) {
+        res
+          .status(codeEnroll)
+          .json({ error: `Failed to join room: ${enrollErr.message}` });
+        return;
+      }
 
       io.to(roomId).emit("new-user", { userName, roomId });
 
@@ -60,7 +84,15 @@ router.get(
       const { roomId } = req.params;
       const { hostKey } = req.body;
 
-      const roomExists = await redisClient.exists(`room:${roomId}`);
+      // check if the room exists
+      const [existsErr, roomExists, codeExists] =
+        await roomService.exists(roomId);
+      if (existsErr) {
+        res.status(codeExists).json({
+          error: `Failed to check if room exists: ${existsErr.message}`,
+        });
+        return;
+      }
       if (!roomExists) {
         res.status(404).json({ error: "Room not found" });
         return;
@@ -71,7 +103,16 @@ router.get(
         return;
       }
 
-      const roomHostKey = await redisClient.hGet(`room:${roomId}`, "hostKey");
+      // get the hostkey of the room
+      const [keyErr, roomHostKey, codeKey] =
+        await roomService.getHostKey(roomId);
+      if (keyErr) {
+        res
+          .status(codeKey)
+          .json({ error: `Failed to get role: ${keyErr.message}` });
+        return;
+      }
+
       if (hostKey === roomHostKey) {
         res.status(200).json({ role: "host" });
         return;
