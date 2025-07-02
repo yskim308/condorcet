@@ -156,9 +156,9 @@ describe("Room Router", () => {
     });
 
     it("should handle Redis errors gracefully", async () => {
-      mockRedisClient.exists.mockRejectedValue(
-        new Error("Redis connection failed"),
-      );
+      mockRedisClient.exists = mock(() => {
+        return Promise.reject(new Error("redis error"));
+      }) as typeof mockRedisClient.exists;
 
       const response = await request(app).post("/participant/room/join").send({
         roomId: "test-room-123",
@@ -266,9 +266,9 @@ describe("Room Router", () => {
     });
 
     it("should handle Redis errors gracefully", async () => {
-      mockRedisClient.exists.mockRejectedValue(
-        new Error("Redis connection failed"),
-      );
+      mockRedisClient.exists = mock(() => {
+        return Promise.reject(new Error("redis error"));
+      }) as typeof mockRedisClient.exists;
 
       const response = await request(app)
         .get("/api/room/test-room-123/getRole")
