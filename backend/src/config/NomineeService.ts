@@ -1,7 +1,7 @@
 import { redisClient } from "./redisClient";
 import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
 
-export class NomineeService {
+export default class NomineeService {
   async setNomineeCount(roomId: string): Promise<[Error | null, number]> {
     try {
       await redisClient.set(`room:${roomId}:nominee_count`, -1);

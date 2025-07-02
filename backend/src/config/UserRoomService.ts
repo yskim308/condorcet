@@ -1,7 +1,7 @@
 import { redisClient } from "./redisClient";
 import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
 
-export class UserRoomService {
+export default class UserRoomService {
   async enrollUser(
     roomId: string,
     userName: string,

@@ -8,7 +8,7 @@ interface RoomData {
   hostKey: string;
 }
 
-export class RoomService {
+export default class RoomService {
   async createRoom(
     roomId: string,
     roomData: RoomData,
