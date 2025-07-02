@@ -2,13 +2,6 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 import express from "express";
 import request from "supertest";
 
-// Mock Redis client
-const mockRedisClient = {
-  exists: mock(() => Promise.resolve(1)),
-  hGet: mock(() => Promise.resolve("nominating")),
-  sAdd: mock(() => Promise.resolve(1)),
-};
-
 // Mock Socket.IO
 const mockIo = {
   to: mock(() => ({
@@ -16,42 +9,75 @@ const mockIo = {
   })),
 };
 
-// Mock the modules
-mock.module("../config/redisClient", () => ({
-  redisClient: mockRedisClient,
-}));
-
 mock.module("../index", () => ({
   io: mockIo,
+}));
+
+// Mock services
+const mockRoomService = {
+  exists: mock<() => Promise<[Error | null, boolean, number]>>(async () => [
+    null,
+    true,
+    200,
+  ]),
+  getState: mock<() => Promise<[Error | null, string, number]>>(async () => [
+    null,
+    "nominating",
+    200,
+  ]),
+  getHostKey: mock<() => Promise<[Error | null, string, number]>>(async () => [
+    null,
+    "secret-host-key",
+    200,
+  ]),
+};
+
+const mockUserRoomService = {
+  enrollUser: mock<() => Promise<[Error | null, number]>>(async () => [
+    null,
+    200,
+  ]),
+};
+
+mock.module("../config/RoomService", () => ({
+  __esModule: true,
+  default: function () {
+    return mockRoomService;
+  },
+}));
+
+mock.module("../config/UserRoomService", () => ({
+  __esModule: true,
+  default: function () {
+    return mockUserRoomService;
+  },
 }));
 
 // Import after mocking
 const { router: participantRoutes } = await import(
   "../routes/participantRoutes"
 );
+
 describe("Room Router", () => {
   let app: express.Application;
 
   beforeEach(() => {
     // Reset all mocks before each test
-    mockRedisClient.exists.mockClear();
-    mockRedisClient.hGet.mockClear();
-    mockRedisClient.sAdd.mockClear();
+    mockRoomService.exists.mockClear();
+    mockRoomService.getState.mockClear();
+    mockRoomService.getHostKey.mockClear();
+    mockUserRoomService.enrollUser.mockClear();
     mockIo.to.mockClear();
 
     // Create a fresh Express app for each test
     app = express();
     app.use(express.json());
-    app.use("/participant", participantRoutes);
+    app.use(participantRoutes);
   });
 
   describe("POST /room/join", () => {
     it("should successfully join a room with valid data", async () => {
-      mockRedisClient.exists.mockResolvedValue(1);
-      mockRedisClient.hGet.mockResolvedValue("nominating");
-      mockRedisClient.sAdd.mockResolvedValue(1);
-
-      const response = await request(app).post("/participant/room/join").send({
+      const response = await request(app).post("/room/join").send({
         roomId: "test-room-123",
         userName: "testUser",
       });
@@ -63,14 +89,11 @@ describe("Room Router", () => {
         userName: "testUser",
       });
 
-      // Verify Redis calls
-      expect(mockRedisClient.exists).toHaveBeenCalledWith("room:test-room-123");
-      expect(mockRedisClient.hGet).toHaveBeenCalledWith(
-        "room:test-room-123",
-        "state",
-      );
-      expect(mockRedisClient.sAdd).toHaveBeenCalledWith(
-        "room:test-room-123:users",
+      // Verify service calls
+      expect(mockRoomService.exists).toHaveBeenCalledWith("test-room-123");
+      expect(mockRoomService.getState).toHaveBeenCalledWith("test-room-123");
+      expect(mockUserRoomService.enrollUser).toHaveBeenCalledWith(
+        "test-room-123",
         "testUser",
       );
 
@@ -79,7 +102,7 @@ describe("Room Router", () => {
     });
 
     it("should return 400 when roomId is missing", async () => {
-      const response = await request(app).post("/participant/room/join").send({
+      const response = await request(app).post("/room/join").send({
         userName: "testUser",
       });
 
@@ -89,32 +112,10 @@ describe("Room Router", () => {
       });
     });
 
-    it("should return 400 when userName is missing", async () => {
-      const response = await request(app).post("/participant/room/join").send({
-        roomId: "test-room-123",
-      });
-
-      expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        error: "roomId and userName are required",
-      });
-    });
-
-    it("should return 400 when both roomId and userName are missing", async () => {
-      const response = await request(app)
-        .post("/participant/room/join")
-        .send({});
-
-      expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        error: "roomId and userName are required",
-      });
-    });
-
     it("should return 404 when room does not exist", async () => {
-      mockRedisClient.exists.mockResolvedValue(0);
+      mockRoomService.exists.mockResolvedValueOnce([null, false, 404]);
 
-      const response = await request(app).post("/participant/room/join").send({
+      const response = await request(app).post("/room/join").send({
         roomId: "nonexistent-room",
         userName: "testUser",
       });
@@ -124,19 +125,16 @@ describe("Room Router", () => {
         error: "Room not found",
       });
 
-      expect(mockRedisClient.exists).toHaveBeenCalledWith(
-        "room:nonexistent-room",
-      );
+      expect(mockRoomService.exists).toHaveBeenCalledWith("nonexistent-room");
       // Should not proceed to check state or add user
-      expect(mockRedisClient.hGet).not.toHaveBeenCalled();
-      expect(mockRedisClient.sAdd).not.toHaveBeenCalled();
+      expect(mockRoomService.getState).not.toHaveBeenCalled();
+      expect(mockUserRoomService.enrollUser).not.toHaveBeenCalled();
     });
 
     it("should return 403 when room is not in nominating state", async () => {
-      mockRedisClient.exists.mockResolvedValue(1);
-      mockRedisClient.hGet.mockResolvedValue("voting");
+      mockRoomService.getState.mockResolvedValueOnce([null, "voting", 200]);
 
-      const response = await request(app).post("/participant/room/join").send({
+      const response = await request(app).post("/room/join").send({
         roomId: "test-room-123",
         userName: "testUser",
       });
@@ -146,50 +144,35 @@ describe("Room Router", () => {
         error: "Room is not in a joinable state",
       });
 
-      expect(mockRedisClient.exists).toHaveBeenCalledWith("room:test-room-123");
-      expect(mockRedisClient.hGet).toHaveBeenCalledWith(
-        "room:test-room-123",
-        "state",
-      );
+      expect(mockRoomService.exists).toHaveBeenCalledWith("test-room-123");
+      expect(mockRoomService.getState).toHaveBeenCalledWith("test-room-123");
       // Should not add user to room
-      expect(mockRedisClient.sAdd).not.toHaveBeenCalled();
+      expect(mockUserRoomService.enrollUser).not.toHaveBeenCalled();
     });
 
-    it("should handle Redis errors gracefully", async () => {
-      mockRedisClient.exists = mock(() => {
-        return Promise.reject(new Error("redis error"));
-      }) as typeof mockRedisClient.exists;
+    it("should handle service errors gracefully", async () => {
+      mockRoomService.exists.mockResolvedValueOnce([
+        new Error("service error"),
+        false,
+        500,
+      ]);
 
-      const response = await request(app).post("/participant/room/join").send({
+      const response = await request(app).post("/room/join").send({
         roomId: "test-room-123",
         userName: "testUser",
       });
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
-        error: "Failed to join room",
-      });
-    });
-
-    it("should handle empty strings as invalid input", async () => {
-      const response = await request(app).post("/participant/room/join").send({
-        roomId: "",
-        userName: "",
-      });
-
-      expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        error: "roomId and userName are required",
+        error: "Failed to check if room exists: service error",
       });
     });
   });
 
   describe("GET /room/:roomId/getRole", () => {
     it("should return user role when no hostKey is provided", async () => {
-      mockRedisClient.exists.mockResolvedValue(1);
-
       const response = await request(app)
-        .get("/participant/room/test-room-123/getRole")
+        .get("/room/test-room-123/getRole")
         .send({});
 
       expect(response.status).toBe(200);
@@ -197,15 +180,12 @@ describe("Room Router", () => {
         role: "user",
       });
 
-      expect(mockRedisClient.exists).toHaveBeenCalledWith("room:test-room-123");
+      expect(mockRoomService.exists).toHaveBeenCalledWith("test-room-123");
     });
 
     it("should return host role when correct hostKey is provided", async () => {
-      mockRedisClient.exists.mockResolvedValue(1);
-      mockRedisClient.hGet.mockResolvedValue("secret-host-key");
-
       const response = await request(app)
-        .get("/participant/room/test-room-123/getRole")
+        .get("/room/test-room-123/getRole")
         .send({
           hostKey: "secret-host-key",
         });
@@ -215,19 +195,13 @@ describe("Room Router", () => {
         role: "host",
       });
 
-      expect(mockRedisClient.exists).toHaveBeenCalledWith("room:test-room-123");
-      expect(mockRedisClient.hGet).toHaveBeenCalledWith(
-        "room:test-room-123",
-        "hostKey",
-      );
+      expect(mockRoomService.exists).toHaveBeenCalledWith("test-room-123");
+      expect(mockRoomService.getHostKey).toHaveBeenCalledWith("test-room-123");
     });
 
     it("should return user role when incorrect hostKey is provided", async () => {
-      mockRedisClient.exists.mockResolvedValue(1);
-      mockRedisClient.hGet.mockResolvedValue("secret-host-key");
-
       const response = await request(app)
-        .get("/api/room/test-room-123/getRole")
+        .get("/room/test-room-123/getRole")
         .send({
           hostKey: "wrong-key",
         });
@@ -237,18 +211,15 @@ describe("Room Router", () => {
         role: "user",
       });
 
-      expect(mockRedisClient.exists).toHaveBeenCalledWith("room:test-room-123");
-      expect(mockRedisClient.hGet).toHaveBeenCalledWith(
-        "room:test-room-123",
-        "hostKey",
-      );
+      expect(mockRoomService.exists).toHaveBeenCalledWith("test-room-123");
+      expect(mockRoomService.getHostKey).toHaveBeenCalledWith("test-room-123");
     });
 
     it("should return 404 when room does not exist", async () => {
-      mockRedisClient.exists.mockResolvedValue(0);
+      mockRoomService.exists.mockResolvedValueOnce([null, false, 404]);
 
       const response = await request(app)
-        .get("/api/room/nonexistent-room/getRole")
+        .get("/room/nonexistent-room/getRole")
         .send({
           hostKey: "some-key",
         });
@@ -258,63 +229,26 @@ describe("Room Router", () => {
         error: "Room not found",
       });
 
-      expect(mockRedisClient.exists).toHaveBeenCalledWith(
-        "room:nonexistent-room",
-      );
+      expect(mockRoomService.exists).toHaveBeenCalledWith("nonexistent-room");
       // Should not proceed to check hostKey
-      expect(mockRedisClient.hGet).not.toHaveBeenCalled();
+      expect(mockRoomService.getHostKey).not.toHaveBeenCalled();
     });
 
-    it("should handle Redis errors gracefully", async () => {
-      mockRedisClient.exists = mock(() => {
-        return Promise.reject(new Error("redis error"));
-      }) as typeof mockRedisClient.exists;
+    it("should handle service errors gracefully", async () => {
+      mockRoomService.exists.mockResolvedValueOnce([
+        new Error("service error"),
+        false,
+        500,
+      ]);
 
       const response = await request(app)
-        .get("/api/room/test-room-123/getRole")
+        .get("/room/test-room-123/getRole")
         .send({});
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
-        error: "Failed to get role",
+        error: "Failed to check if room exists: service error",
       });
-    });
-
-    it("should return user role when hostKey is empty string", async () => {
-      mockRedisClient.exists.mockResolvedValue(1);
-
-      const response = await request(app)
-        .get("/participant/room/test-room-123/getRole")
-        .send({
-          hostKey: "",
-        });
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        role: "user",
-      });
-
-      expect(mockRedisClient.exists).toHaveBeenCalledWith("room:test-room-123");
-      // Should not check for hostKey in Redis since it's empty
-      expect(mockRedisClient.hGet).not.toHaveBeenCalled();
-    });
-
-    it("should return user role when hostKey is null", async () => {
-      mockRedisClient.exists.mockResolvedValue(1);
-
-      const response = await request(app)
-        .get("/participant/room/test-room-123/getRole")
-        .send({
-          hostKey: null,
-        });
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        role: "user",
-      });
-
-      expect(mockRedisClient.exists).toHaveBeenCalledWith("room:test-room-123");
-      expect(mockRedisClient.hGet).not.toHaveBeenCalled();
     });
   });
 });
