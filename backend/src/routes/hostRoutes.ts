@@ -1,10 +1,22 @@
 import express from "express";
 import { io } from "../index";
-import { redisClient } from "../config/redisClient";
+import RoomService from "../config/RoomService";
+import NomineeService from "../config/NomineeService";
+import UserRoomService from "../config/UserRoomService";
 import { randomBytes } from "crypto";
+
+const roomService = new RoomService();
+const nomineeService = new NomineeService();
+const userRoomService = new UserRoomService();
 
 type RoomState = "nominating" | "voting" | "done";
 
+interface RoomData {
+  name: string;
+  state: RoomState;
+  host: string;
+  hostKey: string;
+}
 const router = express.Router();
 
 import { verifyHost } from "../middleware/verifyHost";
@@ -34,6 +46,7 @@ router.post(
         hostKey: hostKey,
       };
 
+      await roomService.createRoom(roomId, roomData);
       await redisClient.hSet(`room:${roomId}`, roomData);
       await redisClient.sAdd(`room:${roomId}:users`, userName);
       await redisClient.set(`room:${roomId}:nominee_count`, -1); // 0 index nominees

@@ -1,12 +1,6 @@
 import { redisClient } from "./redisClient";
 import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
-
-interface RoomData {
-  name: string;
-  state: "nominating" | "voting" | "done";
-  host: string;
-  hostKey: string;
-}
+import type { RoomData } from "../routes/hostRoutes";
 
 export default class RoomService {
   async createRoom(
