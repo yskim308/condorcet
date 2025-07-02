@@ -11,7 +11,7 @@ const userRoomService = new UserRoomService();
 
 type RoomState = "nominating" | "voting" | "done";
 
-interface RoomData {
+export interface RoomData {
   name: string;
   state: RoomState;
   host: string;
@@ -39,7 +39,7 @@ router.post(
       const roomId = randomBytes(8).toString("hex");
       const hostKey = randomBytes(16).toString("hex");
 
-      const roomData = {
+      const roomData: RoomData = {
         name: roomName,
         state: "nominating",
         host: userName,
@@ -47,9 +47,8 @@ router.post(
       };
 
       await roomService.createRoom(roomId, roomData);
-      await redisClient.hSet(`room:${roomId}`, roomData);
-      await redisClient.sAdd(`room:${roomId}:users`, userName);
-      await redisClient.set(`room:${roomId}:nominee_count`, -1); // 0 index nominees
+      await userRoomService.enrollUser(roomId, userName);
+      await nomineeService.setNomineeCount(roomId);
 
       res.status(201).json({
         roomId: roomId,
@@ -83,14 +82,7 @@ router.post(
         return;
       }
 
-      const nomineed_id = await redisClient.incr(
-        `room:${roomId}:nominee_count`,
-      );
-      await redisClient.hSet(
-        `room:${roomId}:nominees`,
-        nomineed_id.toString(),
-        nominee,
-      );
+      await nomineeService.addNominee(roomId, nominee);
 
       io.to(roomId).emit("new-nomination", { nominee, roomId });
 
@@ -127,7 +119,7 @@ router.post(
         return;
       }
 
-      await redisClient.hSet(`room:${roomId}`, "state", state);
+      await roomService.updateState(roomId, state);
 
       io.to(roomId).emit("state-change", { state, roomId });
 
