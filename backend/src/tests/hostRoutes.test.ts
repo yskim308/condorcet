@@ -2,35 +2,77 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 import express from "express";
 import request from "supertest";
 
-// Mock dependencies before importing hostRoutes
-const mockRedisClient = {
-  hSet: mock(() => Promise.resolve()),
-  sAdd: mock(() => Promise.resolve()),
-  exists: mock(() => Promise.resolve(1)),
-  lPush: mock(() => Promise.resolve()),
-  incr: mock(() => Promise.resolve(0)),
-  set: mock(() => Promise.resolve()),
-  hGet: mock((key: string, field: string) => {
-    if (field === "hostKey") {
-      return Promise.resolve("test-host-key");
-    }
-    return Promise.resolve("testHost");
-  }),
-};
-
+// Mock IO before importing hostRoutes
 const mockIo = {
   to: mock(() => ({
     emit: mock(() => {}),
   })),
 };
-
-// Mock the index.js imports before importing the router
 mock.module("../index", () => ({
   io: mockIo,
 }));
 
-mock.module("../config/redisClient", () => ({
-  redisClient: mockRedisClient,
+// Mock services
+const mockRoomService = {
+  createRoom: mock<() => Promise<[Error | null, number]>>(async () => [
+    null,
+    201,
+  ]),
+  updateState: mock<() => Promise<[Error | null, number]>>(async () => [
+    null,
+    200,
+  ]),
+  getHostKey: mock<() => Promise<[Error | null, string, number]>>(async () => [
+    null,
+    "test-host-key",
+    200,
+  ]),
+  exists: mock<() => Promise<[Error | null, boolean, number]>>(async () => [
+    null,
+    true,
+    200,
+  ]),
+  getState: mock<() => Promise<[Error | null, string, number]>>(async () => [
+    null,
+    "nominating",
+    200,
+  ]),
+};
+
+const mockNomineeService = {
+  setNomineeCount: mock<() => Promise<[Error | null, number]>>(async () => {
+    return [null, 200];
+  }),
+  addNominee: mock<() => Promise<[Error | null, number]>>(async () => {
+    return [null, 200];
+  }),
+};
+
+const mockUserRoomService = {
+  enrollUser: mock<() => Promise<[Error | null, number]>>(async () => {
+    return [null, 200];
+  }),
+};
+
+mock.module("../config/RoomService", () => ({
+  __esModule: true,
+  default: function () {
+    return mockRoomService;
+  },
+}));
+
+mock.module("../config/NomineeService", () => ({
+  __esModule: true,
+  default: function () {
+    return mockNomineeService;
+  },
+}));
+
+mock.module("../config/UserRoomService", () => ({
+  __esModule: true,
+  default: function () {
+    return mockUserRoomService;
+  },
 }));
 
 // Import after mocking
@@ -42,22 +84,21 @@ describe("Host Routes", () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    app.use("/host", hostRoutes);
+    app.use(hostRoutes);
 
     // Reset all mocks
-    mockRedisClient.hSet.mockClear();
-    mockRedisClient.sAdd.mockClear();
-    mockRedisClient.exists.mockClear();
-    mockRedisClient.lPush.mockClear();
-    mockRedisClient.incr.mockClear();
-    mockRedisClient.set.mockClear();
-    mockRedisClient.hGet.mockClear();
+    mockRoomService.createRoom.mockClear();
+    mockRoomService.updateState.mockClear();
+    mockRoomService.getHostKey.mockClear();
+    mockNomineeService.setNomineeCount.mockClear();
+    mockNomineeService.addNominee.mockClear();
+    mockUserRoomService.enrollUser.mockClear();
     mockIo.to.mockClear();
   });
 
-  describe("POST /host/rooms/create", () => {
+  describe("POST /rooms/create", () => {
     it("should create a room successfully", async () => {
-      const response = await request(app).post("/host/rooms/create").send({
+      const response = await request(app).post("/rooms/create").send({
         roomName: "Test Room",
         userName: "user123",
       });
@@ -69,16 +110,13 @@ describe("Host Routes", () => {
       });
       expect(response.body.roomId).toBeDefined();
       expect(response.body.hostKey).toBeDefined();
-      expect(mockRedisClient.hSet).toHaveBeenCalled();
-      expect(mockRedisClient.sAdd).toHaveBeenCalled();
-      expect(mockRedisClient.set).toHaveBeenCalledWith(
-        expect.stringMatching(/^room:.+:nominee_count$/),
-        -1,
-      );
+      expect(mockRoomService.createRoom).toHaveBeenCalled();
+      expect(mockUserRoomService.enrollUser).toHaveBeenCalled();
+      expect(mockNomineeService.setNomineeCount).toHaveBeenCalled();
     });
 
     it("should return 400 when roomName is missing", async () => {
-      const response = await request(app).post("/host/rooms/create").send({
+      const response = await request(app).post("/rooms/create").send({
         userName: "user123",
       });
 
@@ -87,7 +125,7 @@ describe("Host Routes", () => {
     });
 
     it("should return 400 when userName is missing", async () => {
-      const response = await request(app).post("/host/rooms/create").send({
+      const response = await request(app).post("/rooms/create").send({
         roomName: "Test Room",
       });
 
@@ -95,27 +133,31 @@ describe("Host Routes", () => {
       expect(response.body.error).toBe("roomName and userId are required");
     });
 
-    it("should handle Redis errors gracefully during room creation", async () => {
-      mockRedisClient.hSet = mock(() => {
-        return Promise.reject(new Error("redis error"));
-      }) as typeof mockRedisClient.hSet;
+    it("should handle service errors gracefully during room creation", async () => {
+      mockRoomService.createRoom.mockResolvedValueOnce([
+        new Error("service error"),
+        500,
+      ]);
 
-      const response = await request(app).post("/host/rooms/create").send({
+      const response = await request(app).post("/rooms/create").send({
         roomName: "Test Room",
         userName: "user123",
       });
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe("Failed to create room");
+      expect(response.body.error).toBe("Failed to create room: service error");
     });
   });
 
-  describe("POST /host/rooms/:roomId/nomination", () => {
+  describe("POST /rooms/:roomId/nomination", () => {
     it("should add a nominee successfully with valid host key", async () => {
-      mockRedisClient.incr.mockResolvedValueOnce(0);
-
+      mockRoomService.getHostKey.mockResolvedValueOnce([
+        null,
+        "test-host-key",
+        200,
+      ]);
       const response = await request(app)
-        .post("/host/rooms/room123/nomination")
+        .post("/rooms/room123/nomination")
         .send({
           nominee: "John Doe",
           hostKey: "test-host-key",
@@ -126,12 +168,8 @@ describe("Host Routes", () => {
         message: "Nominee added successfully",
         nominee: "John Doe",
       });
-      expect(mockRedisClient.incr).toHaveBeenCalledWith(
-        "room:room123:nominee_count",
-      );
-      expect(mockRedisClient.hSet).toHaveBeenCalledWith(
-        "room:room123:nominees",
-        "0",
+      expect(mockNomineeService.addNominee).toHaveBeenCalledWith(
+        "room123",
         "John Doe",
       );
       expect(mockIo.to).toHaveBeenCalledWith("room123");
@@ -139,7 +177,7 @@ describe("Host Routes", () => {
 
     it("should return 401 when no host key is provided", async () => {
       const response = await request(app)
-        .post("/host/rooms/room123/nomination")
+        .post("/rooms/room123/nomination")
         .send({
           nominee: "John Doe",
         });
@@ -149,8 +187,13 @@ describe("Host Routes", () => {
     });
 
     it("should return 403 when invalid host key is provided", async () => {
+      mockRoomService.getHostKey.mockResolvedValueOnce([
+        null,
+        "correct-key",
+        200,
+      ]);
       const response = await request(app)
-        .post("/host/rooms/room123/nomination")
+        .post("/rooms/room123/nomination")
         .send({
           nominee: "John Doe",
           hostKey: "invalid-key",
@@ -161,83 +204,100 @@ describe("Host Routes", () => {
     });
 
     it("should return 400 when nominee is missing", async () => {
+      mockRoomService.getHostKey.mockResolvedValueOnce([
+        null,
+        "test-host-key",
+        200,
+      ]);
       const response = await request(app)
-        .post("/host/rooms/room123/nomination")
+        .post("/rooms/room123/nomination")
         .send({ hostKey: "test-host-key" });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe("nominee is required");
     });
 
-    it("should handle Redis errors gracefully during nomination", async () => {
-      mockRedisClient.incr = mock(() => {
-        return Promise.reject(new Error("redis error"));
-      }) as typeof mockRedisClient.incr;
+    it("should handle service errors gracefully during nomination", async () => {
+      mockRoomService.getHostKey.mockResolvedValueOnce([
+        null,
+        "test-host-key",
+        200,
+      ]);
+      mockNomineeService.addNominee.mockResolvedValueOnce([
+        new Error("service error"),
+        500,
+      ]);
 
       const response = await request(app)
-        .post("/host/rooms/room123/nomination")
+        .post("/rooms/room123/nomination")
         .send({
           nominee: "John Doe",
           hostKey: "test-host-key",
         });
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe("Failed to add nominee");
+      expect(response.body.error).toBe("Failed to add nominee: service error");
     });
   });
 
-  describe("POST /host/rooms/:roomId/state", () => {
+  describe("POST /rooms/:roomId/state", () => {
     it("should update room state successfully with valid host key", async () => {
-      const response = await request(app)
-        .post("/host/rooms/room123/state")
-        .send({
-          state: "voting",
-          hostKey: "test-host-key",
-        });
+      mockRoomService.getHostKey.mockResolvedValueOnce([
+        null,
+        "test-host-key",
+        200,
+      ]);
+      const response = await request(app).post("/rooms/room123/state").send({
+        state: "voting",
+        hostKey: "test-host-key",
+      });
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         message: "Room state updated successfully",
         state: "voting",
       });
-      expect(mockRedisClient.hSet).toHaveBeenCalledWith(
-        "room:room123",
-        "state",
+      expect(mockRoomService.updateState).toHaveBeenCalledWith(
+        "room123",
         "voting",
       );
       expect(mockIo.to).toHaveBeenCalledWith("room123");
     });
 
     it("should return 401 when no host key is provided", async () => {
-      const response = await request(app)
-        .post("/host/rooms/room123/state")
-        .send({
-          state: "voting",
-        });
+      const response = await request(app).post("/rooms/room123/state").send({
+        state: "voting",
+      });
 
       expect(response.status).toBe(401);
       expect(response.body.error).toBe("no host key provided");
     });
 
     it("should return 403 when invalid host key is provided", async () => {
-      const response = await request(app)
-        .post("/host/rooms/room123/state")
-        .send({
-          state: "voting",
-          hostKey: "invalid-key",
-        });
+      mockRoomService.getHostKey.mockResolvedValueOnce([
+        null,
+        "correct-key",
+        200,
+      ]);
+      const response = await request(app).post("/rooms/room123/state").send({
+        state: "voting",
+        hostKey: "invalid-key",
+      });
 
       expect(response.status).toBe(403);
       expect(response.body.error).toBe("invalid host key");
     });
 
     it("should return 400 for invalid state", async () => {
-      const response = await request(app)
-        .post("/host/rooms/room123/state")
-        .send({
-          state: "invalid_state",
-          hostKey: "test-host-key",
-        });
+      mockRoomService.getHostKey.mockResolvedValueOnce([
+        null,
+        "test-host-key",
+        200,
+      ]);
+      const response = await request(app).post("/rooms/room123/state").send({
+        state: "invalid_state",
+        hostKey: "test-host-key",
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe(
@@ -245,20 +305,26 @@ describe("Host Routes", () => {
       );
     });
 
-    it("should handle Redis errors gracefully during state update", async () => {
-      mockRedisClient.hSet = mock(() => {
-        return Promise.reject(new Error("redis error"));
-      }) as typeof mockRedisClient.hSet;
+    it("should handle service errors gracefully during state update", async () => {
+      mockRoomService.getHostKey.mockResolvedValueOnce([
+        null,
+        "test-host-key",
+        200,
+      ]);
+      mockRoomService.updateState.mockResolvedValueOnce([
+        new Error("service error"),
+        500,
+      ]);
 
-      const response = await request(app)
-        .post("/host/rooms/room123/state")
-        .send({
-          state: "voting",
-          hostKey: "test-host-key",
-        });
+      const response = await request(app).post("/rooms/room123/state").send({
+        state: "voting",
+        hostKey: "test-host-key",
+      });
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe("Failed to update room state");
+      expect(response.body.error).toBe(
+        "Failed to update room state: service error",
+      );
     });
   });
 });
