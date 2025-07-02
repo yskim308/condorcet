@@ -1,6 +1,12 @@
 import express from "express";
 import { io } from "../index";
-import { redisClient } from "../config/redisClient";
+import UserRoomService from "../config/UserRoomService";
+import NomineeService from "../config/NomineeService";
+import RoomService from "../config/RoomService";
+
+const roomService = new RoomService();
+const nomineeService = new NomineeService();
+const userRoomService = new UserRoomService();
 
 const router = express.Router();
 
