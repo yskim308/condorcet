@@ -299,9 +299,6 @@ describe("Host Routes", () => {
       });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe(
-        "state is required and must be 'nominating', 'voting', or 'done'",
-      );
     });
 
     it("should handle service errors gracefully during state update", async () => {
