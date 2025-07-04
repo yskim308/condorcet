@@ -15,5 +15,5 @@ export default class UserRoomService {
     }
   }
 
-  // @toodo: userExists
+  // @toodo: userExists, getUsers
 }
