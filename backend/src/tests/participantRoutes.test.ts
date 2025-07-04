@@ -2,15 +2,16 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 import express from "express";
 import request from "supertest";
 
-// Mock Socket.IO
-const mockIo = {
-  to: mock(() => ({
-    emit: mock(() => {}),
-  })),
+// Mock SocketService
+const mockSocketService = {
+  emitNewUser: mock<() => void>(() => {}),
 };
 
-mock.module("../index", () => ({
-  io: mockIo,
+mock.module("../config/SocketService", () => ({
+  __esModule: true,
+  default: function () {
+    return mockSocketService;
+  },
 }));
 
 // Mock services
@@ -54,7 +55,7 @@ mock.module("../config/UserRoomService", () => ({
 }));
 
 // Import after mocking
-const { router: participantRoutes } = await import(
+const { createParticipantRouter } = await import(
   "../routes/participantRoutes"
 );
 
@@ -67,12 +68,13 @@ describe("Participant Router", () => {
     mockRoomService.getState.mockClear();
     mockRoomService.getHostKey.mockClear();
     mockUserRoomService.enrollUser.mockClear();
-    mockIo.to.mockClear();
+    mockSocketService.emitNewUser.mockClear();
 
     // Create a fresh Express app for each test
     app = express();
     app.use(express.json());
-    app.use(participantRoutes);
+    const participantRouter = createParticipantRouter(mockSocketService as any);
+    app.use(participantRouter);
   });
 
   describe("POST /room/join", () => {
@@ -94,11 +96,14 @@ describe("Participant Router", () => {
       expect(mockRoomService.getState).toHaveBeenCalledWith("test-room-123");
       expect(mockUserRoomService.enrollUser).toHaveBeenCalledWith(
         "test-room-123",
-        "testUser",
+        "testUser"
       );
 
       // Verify Socket.IO emission
-      expect(mockIo.to).toHaveBeenCalledWith("test-room-123");
+      expect(mockSocketService.emitNewUser).toHaveBeenCalledWith(
+        "test-room-123",
+        "testUser"
+      );
     });
 
     it("should return 400 when roomId is missing", async () => {

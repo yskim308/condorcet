@@ -2,14 +2,17 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 import express from "express";
 import request from "supertest";
 
-// Mock IO before importing hostRoutes
-const mockIo = {
-  to: mock(() => ({
-    emit: mock(() => {}),
-  })),
+// Mock SocketService
+const mockSocketService = {
+  emitNewNomination: mock<() => void>(() => {}),
+  emitStateChange: mock<() => void>(() => {}),
 };
-mock.module("../index", () => ({
-  io: mockIo,
+
+mock.module("../config/SocketService", () => ({
+  __esModule: true,
+  default: function () {
+    return mockSocketService;
+  },
 }));
 
 // Mock services
@@ -76,7 +79,7 @@ mock.module("../config/UserRoomService", () => ({
 }));
 
 // Import after mocking
-const { router: hostRoutes } = await import("../routes/hostRoutes");
+const { createHostRouter } = await import("../routes/hostRoutes");
 
 describe("Host Routes", () => {
   let app: express.Application;
@@ -84,7 +87,8 @@ describe("Host Routes", () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    app.use(hostRoutes);
+    const hostRouter = createHostRouter(mockSocketService as any);
+    app.use(hostRouter);
 
     // Reset all mocks
     mockRoomService.createRoom.mockClear();
@@ -93,7 +97,8 @@ describe("Host Routes", () => {
     mockNomineeService.setNomineeCount.mockClear();
     mockNomineeService.addNominee.mockClear();
     mockUserRoomService.enrollUser.mockClear();
-    mockIo.to.mockClear();
+    mockSocketService.emitNewNomination.mockClear();
+    mockSocketService.emitStateChange.mockClear();
   });
 
   describe("POST /rooms/create", () => {
@@ -167,9 +172,12 @@ describe("Host Routes", () => {
       });
       expect(mockNomineeService.addNominee).toHaveBeenCalledWith(
         "room123",
-        "John Doe",
+        "John Doe"
       );
-      expect(mockIo.to).toHaveBeenCalledWith("room123");
+      expect(mockSocketService.emitNewNomination).toHaveBeenCalledWith(
+        "room123",
+        "John Doe"
+      );
     });
 
     it("should return 401 when no host key is provided", async () => {
@@ -252,9 +260,12 @@ describe("Host Routes", () => {
       });
       expect(mockRoomService.updateState).toHaveBeenCalledWith(
         "room123",
-        "voting",
+        "voting"
       );
-      expect(mockIo.to).toHaveBeenCalledWith("room123");
+      expect(mockSocketService.emitStateChange).toHaveBeenCalledWith(
+        "room123",
+        "voting"
+      );
     });
 
     it("should return 401 when no host key is provided", async () => {
