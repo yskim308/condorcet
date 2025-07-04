@@ -7,7 +7,7 @@ const mockSocketService = {
   emitNewUser: mock<() => void>(() => {}),
 };
 
-mock.module("../config/SocketService", () => ({
+mock.module("../../config/SocketService", () => ({
   __esModule: true,
   default: function () {
     return mockSocketService;
@@ -40,14 +40,14 @@ const mockUserRoomService = {
   ]),
 };
 
-mock.module("../config/RoomService", () => ({
+mock.module("../../config/RoomService", () => ({
   __esModule: true,
   default: function () {
     return mockRoomService;
   },
 }));
 
-mock.module("../config/UserRoomService", () => ({
+mock.module("../../config/UserRoomService", () => ({
   __esModule: true,
   default: function () {
     return mockUserRoomService;
@@ -56,7 +56,7 @@ mock.module("../config/UserRoomService", () => ({
 
 // Import after mocking
 const { createParticipantRouter } = await import(
-  "../routes/participantRoutes"
+  "../../routes/participantRoutes"
 );
 
 describe("Participant Router", () => {

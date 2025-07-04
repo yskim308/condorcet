@@ -8,7 +8,7 @@ const mockSocketService = {
   emitStateChange: mock<() => void>(() => {}),
 };
 
-mock.module("../config/SocketService", () => ({
+mock.module("../../config/SocketService", () => ({
   __esModule: true,
   default: function () {
     return mockSocketService;
@@ -57,21 +57,21 @@ const mockUserRoomService = {
   }),
 };
 
-mock.module("../config/RoomService", () => ({
+mock.module("../../config/RoomService", () => ({
   __esModule: true,
   default: function () {
     return mockRoomService;
   },
 }));
 
-mock.module("../config/NomineeService", () => ({
+mock.module("../../config/NomineeService", () => ({
   __esModule: true,
   default: function () {
     return mockNomineeService;
   },
 }));
 
-mock.module("../config/UserRoomService", () => ({
+mock.module("../../config/UserRoomService", () => ({
   __esModule: true,
   default: function () {
     return mockUserRoomService;
@@ -79,7 +79,7 @@ mock.module("../config/UserRoomService", () => ({
 }));
 
 // Import after mocking
-const { createHostRouter } = await import("../routes/hostRoutes");
+const { createHostRouter } = await import("../../routes/hostRoutes");
 
 describe("Host Routes", () => {
   let app: express.Application;

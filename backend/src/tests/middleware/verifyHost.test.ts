@@ -12,7 +12,7 @@ const mockRoomService = {
   }),
 };
 
-mock.module("../config/RoomService", () => ({
+mock.module("../../config/RoomService", () => ({
   __esModule: true,
   default: function () {
     return mockRoomService;
@@ -20,7 +20,7 @@ mock.module("../config/RoomService", () => ({
 }));
 
 // Import after mocking
-const { verifyHost } = await import("../middleware/verifyHost");
+const { verifyHost } = await import("../../middleware/verifyHost");
 
 describe("verifyHost Middleware", () => {
   let app: express.Application;
