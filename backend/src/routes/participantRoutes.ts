@@ -85,7 +85,7 @@ router.post(
   async (req: express.Request, res: express.Response) => {
     try {
       const { roomId } = req.params;
-      const hostKey = req.headers.authorization?.split(" ")[1];
+      const { hostKey }: GetRoleBody = req.body;
 
       // check if the room exists
       const [existsErr, roomExists, codeExists] =
