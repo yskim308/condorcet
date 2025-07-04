@@ -1,5 +1,5 @@
 import express from "express";
-import { io } from "../index";
+import { socketService } from "../index";
 import UserRoomService from "../config/UserRoomService";
 import RoomService from "../config/RoomService";
 
@@ -63,7 +63,7 @@ router.post(
         return;
       }
 
-      io.to(roomId).emit("new-user", { userName, roomId });
+      socketService.emitNewUser(roomId, userName);
 
       res.status(200).json({
         message: "Joined room successfully",
