@@ -77,12 +77,15 @@ router.post(
   },
 );
 
-router.get(
+interface GetRoleBody {
+  hostKey: string;
+}
+router.post(
   "/room/:roomId/getRole",
   async (req: express.Request, res: express.Response) => {
     try {
       const { roomId } = req.params;
-      const { hostKey } = req.body;
+      const hostKey = req.headers.authorization?.split(" ")[1];
 
       // check if the room exists
       const [existsErr, roomExists, codeExists] =

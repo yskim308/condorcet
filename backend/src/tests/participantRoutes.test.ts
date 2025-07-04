@@ -160,7 +160,7 @@ describe("Participant Router", () => {
   describe("GET /room/:roomId/getRole", () => {
     it("should return user role when no hostKey is provided", async () => {
       const response = await request(app)
-        .get("/room/test-room-123/getRole")
+        .post("/room/test-room-123/getRole")
         .send({});
 
       expect(response.status).toBe(200);
@@ -173,7 +173,7 @@ describe("Participant Router", () => {
 
     it("should return host role when correct hostKey is provided", async () => {
       const response = await request(app)
-        .get("/room/test-room-123/getRole")
+        .post("/room/test-room-123/getRole")
         .send({
           hostKey: "secret-host-key",
         });
@@ -189,7 +189,7 @@ describe("Participant Router", () => {
 
     it("should return user role when incorrect hostKey is provided", async () => {
       const response = await request(app)
-        .get("/room/test-room-123/getRole")
+        .post("/room/test-room-123/getRole")
         .send({
           hostKey: "wrong-key",
         });
@@ -207,7 +207,7 @@ describe("Participant Router", () => {
       mockRoomService.exists.mockResolvedValueOnce([null, false, 404]);
 
       const response = await request(app)
-        .get("/room/nonexistent-room/getRole")
+        .post("/room/nonexistent-room/getRole")
         .send({
           hostKey: "some-key",
         });
@@ -227,7 +227,7 @@ describe("Participant Router", () => {
       ]);
 
       const response = await request(app)
-        .get("/room/test-room-123/getRole")
+        .post("/room/test-room-123/getRole")
         .send({});
 
       expect(response.status).toBe(500);
