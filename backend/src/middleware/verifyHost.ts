@@ -17,7 +17,16 @@ export const verifyHost = async (
       return;
     }
 
-    const roomHostKey = roomService.getHostKey(roomId);
+    const [err, roomHostKey, code] = await roomService.getHostKey(roomId);
+    if (err) {
+      console.error(
+        `Error getting hostkey for room: ${roomId}: ${err.message}`,
+      );
+      res
+        .status(code)
+        .json({ error: `redis failde to get hostkey: ${err.message}` });
+    }
+
     if (hostKey !== roomHostKey) {
       res.status(403).json({ error: "invalid host key" });
       return;
