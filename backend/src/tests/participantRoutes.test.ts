@@ -58,7 +58,7 @@ const { router: participantRoutes } = await import(
   "../routes/participantRoutes"
 );
 
-describe("Room Router", () => {
+describe("Participant Router", () => {
   let app: express.Application;
 
   beforeEach(() => {
