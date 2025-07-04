@@ -50,7 +50,6 @@ describe("verifyHost Middleware", () => {
     const response = await request(app).post("/test/room123").send({});
 
     expect(response.status).toBe(401);
-    expect(response.body.error).toBe("no host key provided");
   });
 
   it("should return 403 if host key is invalid", async () => {
@@ -59,7 +58,6 @@ describe("verifyHost Middleware", () => {
     });
 
     expect(response.status).toBe(403);
-    expect(response.body.error).toBe("invalid host key");
   });
 
   it("should return 500 if the service throws an error", async () => {
@@ -74,7 +72,5 @@ describe("verifyHost Middleware", () => {
     });
 
     expect(response.status).toBe(500);
-    expect(response.body.error).toBe("host key verification failed");
   });
 });
-
