@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
 
-export class SocketService {
+export default class SocketService {
   private io: Server;
 
   constructor(io: Server) {
@@ -26,16 +26,24 @@ export class SocketService {
   }
 
   // Business logic methods
-  public emitNewNomination(roomId: string, nominee: any) {
+  emitNewNomination(roomId: string, nominee: any) {
     this.io.to(roomId).emit("new-nomination", { nominee, roomId });
   }
 
+  emitStateChange(roomId: string, state: "nominating" | "voting" | "done") {
+    this.io.to(roomId).emit("state-change", { state, roomId });
+  }
+
+  emitNewUser(roomId: string, userName: string) {
+    this.io.to(roomId).emit("new-user", { userName, roomId });
+  }
+
   // Utility methods
-  public getRoomClients(roomId: string) {
+  getRoomClients(roomId: string) {
     return this.io.sockets.adapter.rooms.get(roomId);
   }
 
-  public getConnectedSockets() {
+  getConnectedSockets() {
     return this.io.sockets.sockets.size;
   }
 }
