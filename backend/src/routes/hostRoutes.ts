@@ -1,5 +1,5 @@
 import express from "express";
-import { io } from "../index";
+import { socketService } from "../index";
 import RoomService from "../config/RoomService";
 import NomineeService from "../config/NomineeService";
 import UserRoomService from "../config/UserRoomService";
@@ -116,7 +116,7 @@ router.post(
         return;
       }
 
-      io.to(roomId).emit("new-nomination", { nominee, roomId });
+      socketService.emitNewNomination(roomId, nominee);
 
       res.status(200).json({
         message: "Nominee added successfully",
@@ -159,7 +159,7 @@ router.post(
         return;
       }
 
-      io.to(roomId).emit("state-change", { state, roomId });
+      socketService.emitStateChange(roomId, state);
 
       res.status(200).json({
         message: "Room state updated successfully",
