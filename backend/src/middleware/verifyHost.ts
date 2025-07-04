@@ -1,5 +1,7 @@
 import express from "express";
-import { redisClient } from "../config/redisClient";
+import RoomService from "../config/RoomService";
+
+const roomService = new RoomService();
 
 export const verifyHost = async (
   req: express.Request,
@@ -15,7 +17,7 @@ export const verifyHost = async (
       return;
     }
 
-    const roomHostKey = await redisClient.hGet(`room:${roomId}`, "hostKey");
+    const roomHostKey = roomService.getHostKey(roomId);
     if (hostKey !== roomHostKey) {
       res.status(403).json({ error: "invalid host key" });
       return;
