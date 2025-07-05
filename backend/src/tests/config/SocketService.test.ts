@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Server } from "socket.io";
 import { io as ioc, Socket as ClientSocket } from "socket.io-client";
 import SocketService from "../../config/SocketService";
-import { AddressInfo } from "net";
+import { type AddressInfo } from "net";
 import { createServer } from "http";
 
 describe("SocketService", () => {
