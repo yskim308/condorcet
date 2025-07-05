@@ -10,7 +10,8 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/redis": "^4.0.11",
     "@types/socket.io": "^3.0.2",
-    "@types/supertest": "^6.0.3"
+    "@types/supertest": "^6.0.3",
+    "socket.io-client": "^4.8.1"
   },
   "peerDependencies": {
     "typescript": "^5"
