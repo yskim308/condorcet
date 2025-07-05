@@ -3,6 +3,7 @@ import { Server } from "socket.io";
 import { io as ioc, Socket as ClientSocket } from "socket.io-client";
 import SocketService from "../../config/SocketService";
 import { AddressInfo } from "net";
+import { createServer } from "http";
 
 describe("SocketService", () => {
   let io: Server,
@@ -12,9 +13,11 @@ describe("SocketService", () => {
     port: number;
 
   beforeEach((done) => {
-    io = new Server();
-    io.listen(() => {
-      port = (io.httpServer.address() as AddressInfo).port;
+    const httpServer = createServer();
+    io = new Server(httpServer);
+
+    httpServer.listen(() => {
+      port = (httpServer.address() as AddressInfo).port;
       socketService = new SocketService(io);
 
       clientSocket = ioc(`http://localhost:${port}`, {
@@ -56,8 +59,10 @@ describe("SocketService", () => {
 
   it("should handle disconnect event", (done) => {
     clientSocket.on("disconnect", () => {
-      expect(socketService.getConnectedSockets()).toBe(0);
-      done();
+      setTimeout(() => {
+        expect(socketService.getConnectedSockets()).toBe(0);
+        done();
+      }, 100);
     });
 
     clientSocket.disconnect();
@@ -75,7 +80,9 @@ describe("SocketService", () => {
       done();
     });
 
-    socketService.emitNewNomination(roomId, nominee);
+    setTimeout(() => {
+      socketService.emitNewNomination(roomId, nominee);
+    }, 100);
   });
 
   it("should emit state-change event", (done) => {
@@ -90,7 +97,9 @@ describe("SocketService", () => {
       done();
     });
 
-    socketService.emitStateChange(roomId, state);
+    setTimeout(() => {
+      socketService.emitStateChange(roomId, state);
+    }, 100);
   });
 
   it("should emit new-user event", (done) => {
@@ -105,7 +114,9 @@ describe("SocketService", () => {
       done();
     });
 
-    socketService.emitNewUser(roomId, userName);
+    setTimeout(() => {
+      socketService.emitNewUser(roomId, userName);
+    }, 100);
   });
 
   it("should get room clients", async () => {
