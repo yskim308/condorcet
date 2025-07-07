@@ -41,4 +41,19 @@ export default class NomineeService {
       return [err, null, code];
     }
   }
+
+  async saveVote(
+    roomId: string,
+    preferences: string[],
+  ): Promise<[Error | null, number]> {
+    try {
+      await redisClient.lPush(`room:${roomId}:votes`, preferences);
+      return [null, 200];
+    } catch (error: unknown) {
+      console.error(
+        "Error saving voting preferences: " + getErrorMessage(error),
+      );
+      return getRedisError(error);
+    }
+  }
 }
