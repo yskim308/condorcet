@@ -25,4 +25,20 @@ export default class NomineeService {
       return getRedisError(error);
     }
   }
+
+  async getAllNominees(
+    roomId: string,
+  ): Promise<[Error | null, Record<string, string> | null, number]> {
+    try {
+      // HGETALL returns an object where keys are fields and values are their corresponding values.
+      const nominees = await redisClient.hGetAll(`room:${roomId}:nominees`);
+
+      return [null, nominees, 200];
+    } catch (error: unknown) {
+      console.error("error getting all nominees: " + getErrorMessage(error));
+      // Depending on your error handling, you might return a specific error type;
+      const [err, code] = getRedisError(error);
+      return [err, null, code];
+    }
+  }
 }
