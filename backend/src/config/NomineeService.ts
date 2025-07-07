@@ -47,13 +47,33 @@ export default class NomineeService {
     preferences: string[],
   ): Promise<[Error | null, number]> {
     try {
-      await redisClient.lPush(`room:${roomId}:votes`, preferences);
+      // Serialize the array to a JSON string to preserve its structure
+      const serializedPreferences = JSON.stringify(preferences);
+      await redisClient.lPush(`room:${roomId}:votes`, serializedPreferences);
       return [null, 200];
     } catch (error: unknown) {
       console.error(
         "Error saving voting preferences: " + getErrorMessage(error),
       );
       return getRedisError(error);
+    }
+  }
+
+  async getAllVotes(
+    roomId: string,
+  ): Promise<[Error | null, string[][] | null, number]> {
+    try {
+      const votesAsJson = await redisClient.lRange(`room:${roomId}:votes`, 0, -1);
+      if (!votesAsJson) {
+        return [null, [], 200]; // Return empty array if no votes
+      }
+      // Parse each JSON string back into an array of strings
+      const votes = votesAsJson.map((vote) => JSON.parse(vote));
+      return [null, votes, 200];
+    } catch (error: unknown) {
+      console.error("error getting all votes: " + getErrorMessage(error));
+      const [err, code] = getRedisError(error);
+      return [err, null, code];
     }
   }
 }
