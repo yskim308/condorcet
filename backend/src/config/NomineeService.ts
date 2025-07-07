@@ -12,6 +12,22 @@ export default class NomineeService {
     }
   }
 
+  async getNomineeCount(
+    roomId: string,
+  ): Promise<[Error | null, number | null, number]> {
+    try {
+      const count = await redisClient.get(`room:${roomId}:nominee_count`);
+      if (!count) {
+        return [null, null, 200];
+      }
+      return [null, parseInt(count), 200];
+    } catch (error: unknown) {
+      console.error("error getting nominee count: " + getErrorMessage(error));
+      const [err, code] = getRedisError(error);
+      return [err, null, code];
+    }
+  }
+
   async addNominee(
     roomId: string,
     nominee: string,
@@ -63,7 +79,11 @@ export default class NomineeService {
     roomId: string,
   ): Promise<[Error | null, string[][] | null, number]> {
     try {
-      const votesAsJson = await redisClient.lRange(`room:${roomId}:votes`, 0, -1);
+      const votesAsJson = await redisClient.lRange(
+        `room:${roomId}:votes`,
+        0,
+        -1,
+      );
       if (!votesAsJson) {
         return [null, [], 200]; // Return empty array if no votes
       }
