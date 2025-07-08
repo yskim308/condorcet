@@ -62,6 +62,8 @@ function rankPairs(preferences: number[][]): RankedPair[] {
           loser: i,
           margin: votesForJ - votesForI,
         });
+      } else {
+        rankedPairs.push({ winner: i, loser: j, margin: 0 });
       }
     }
   }
