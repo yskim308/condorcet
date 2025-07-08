@@ -68,7 +68,15 @@ function rankPairs(preferences: number[][]): RankedPair[] {
     }
   }
 
-  return rankedPairs.sort((a, b) => b.margin - a.margin);
+  return rankedPairs.sort((a, b) => {
+    if (b.margin !== a.margin) {
+      return b.margin - a.margin;
+    } else if (a.winner !== b.winner) {
+      return a.winner - b.winner;
+    } else {
+      return a.loser - b.loser;
+    }
+  });
 }
 
 function hasCycle(graph: number[][], startNode: number, endNode: number): boolean {
