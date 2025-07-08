@@ -71,5 +71,43 @@ function rankPairs(preferences: number[][]): RankedPair[] {
   return rankedPairs.sort((a, b) => b.margin - a.margin);
 }
 
-export { setVote, createPreferencesArray, rankPairs };
+function hasCycle(graph: number[][], startNode: number, endNode: number): boolean {
+  const queue = [endNode];
+  const visited = new Set<number>();
+
+  while (queue.length > 0) {
+    const currentNode = queue.shift()!;
+    if (currentNode === startNode) {
+      return true;
+    }
+    if (visited.has(currentNode)) {
+      continue;
+    }
+    visited.add(currentNode);
+
+    for (let neighbor = 0; neighbor < graph.length; neighbor++) {
+      if (graph[currentNode][neighbor] === 1) {
+        queue.push(neighbor);
+      }
+    }
+  }
+
+  return false;
+}
+
+function lockEdges(rankedPairs: RankedPair[], nominees: number): number[][] {
+  const graph: number[][] = Array(nominees)
+    .fill(0)
+    .map(() => Array(nominees).fill(0));
+
+  for (const { winner, loser } of rankedPairs) {
+    if (!hasCycle(graph, winner, loser)) {
+      graph[winner][loser] = 1;
+    }
+  }
+
+  return graph;
+}
+
+export { setVote, createPreferencesArray, rankPairs, lockEdges, hasCycle };
 export type { RankedPair };
