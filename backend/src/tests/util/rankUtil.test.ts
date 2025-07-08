@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'bun:test';
-import { createPreferencesArray, rankPairs } from '../../util/rankUtil';
+import {
+  createPreferencesArray,
+  rankPairs,
+  lockEdges,
+  hasCycle,
+} from '../../util/rankUtil';
 
 describe('rankUtil', () => {
   describe('createPreferencesArray', () => {
@@ -99,6 +104,73 @@ describe('rankUtil', () => {
       ];
 
       expect(ranked).toEqual(expected);
+    });
+  });
+
+  describe('hasCycle', () => {
+    it('should detect a direct cycle', () => {
+      const graph = [
+        [0, 1, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+      ];
+      expect(hasCycle(graph, 1, 0)).toBe(true);
+    });
+
+    it('should detect an indirect cycle', () => {
+      const graph = [
+        [0, 1, 0],
+        [0, 0, 1],
+        [0, 0, 0],
+      ];
+      expect(hasCycle(graph, 2, 0)).toBe(true);
+    });
+
+    it('should not detect a cycle where none exists', () => {
+      const graph = [
+        [0, 1, 0],
+        [0, 0, 1],
+        [0, 0, 0],
+      ];
+      expect(hasCycle(graph, 0, 2)).toBe(false);
+    });
+  });
+
+  describe('lockEdges', () => {
+    it('should lock edges without creating a cycle', () => {
+      const rankedPairs = [
+        { winner: 0, loser: 1, margin: 5 },
+        { winner: 1, loser: 2, margin: 3 },
+        { winner: 2, loser: 0, margin: 1 }, // This would create a cycle
+      ];
+      const nominees = 3;
+      const graph = lockEdges(rankedPairs, nominees);
+
+      const expectedGraph = [
+        [0, 1, 0],
+        [0, 0, 1],
+        [0, 0, 0],
+      ];
+
+      expect(graph).toEqual(expectedGraph);
+    });
+
+    it('should correctly lock edges in a standard election', () => {
+      const rankedPairs = [
+        { winner: 0, loser: 2, margin: 4 },
+        { winner: 1, loser: 0, margin: 2 },
+        { winner: 1, loser: 2, margin: 1 },
+      ];
+      const nominees = 3;
+      const graph = lockEdges(rankedPairs, nominees);
+
+      const expectedGraph = [
+        [0, 0, 1],
+        [1, 0, 1],
+        [0, 0, 0],
+      ];
+
+      expect(graph).toEqual(expectedGraph);
     });
   });
 });
