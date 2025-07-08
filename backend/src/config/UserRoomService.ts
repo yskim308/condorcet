@@ -52,4 +52,23 @@ export default class UserRoomService {
       return [err, [], 200];
     }
   }
+
+  async setUserVoted(
+    roomId: string,
+    userName: string,
+  ): Promise<[Error | null, number]> {
+    try {
+      const [err, exists, code] = await this.userExists(roomId, userName);
+      if (!exists) {
+        return [
+          new Error(`User ${userName} does not exist in room ${roomId}`),
+          404,
+        ];
+      }
+      await redisClient.sAdd(`room:${roomId}:voted`, userName);
+      return [null, 200];
+    } catch (error: unknown) {
+      return getRedisError(error);
+    }
+  }
 }
