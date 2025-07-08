@@ -15,5 +15,41 @@ export default class UserRoomService {
     }
   }
 
-  // @toodo: userExists, getUsers
+  async userExists(
+    roomId: string,
+    userName: string,
+  ): Promise<[Error | null, boolean, number]> {
+    try {
+      const exists = await redisClient.sIsMember(
+        `room:${roomId}:users`,
+        userName,
+      );
+      if (!exists) {
+        return [null, false, 200];
+      } else {
+        return [null, true, 200];
+      }
+    } catch (error: unknown) {
+      console.error(
+        `error checking if user ${userName} exists` + getErrorMessage(error),
+      );
+      const [err, code] = getRedisError(error);
+      return [err, false, code];
+    }
+  }
+
+  async getUsers(roomId: string): Promise<[Error | null, string[], number]> {
+    try {
+      const members: string[] = await redisClient.sMembers(
+        `room:${roomId}:users`,
+      );
+      return [null, members, 200];
+    } catch (error: unknown) {
+      console.error(
+        `error getting users for room ${roomId}` + getErrorMessage(error),
+      );
+      const [err, code] = getRedisError(error);
+      return [err, [], 200];
+    }
+  }
 }
