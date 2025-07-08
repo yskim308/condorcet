@@ -98,8 +98,8 @@ describe('rankUtil', () => {
       const ranked = rankPairs(preferences);
 
       const expected = [
-        { winner: 1, loser: 0, margin: 1 },
         { winner: 0, loser: 2, margin: 1 },
+        { winner: 1, loser: 0, margin: 1 },
         { winner: 1, loser: 2, margin: 1 },
       ];
 
