@@ -38,6 +38,10 @@ export default class SocketService {
     this.io.to(roomId).emit("new-user", { userName, roomId });
   }
 
+  emitNewVote(roomId: string, userName: string) {
+    this.io.to(roomId).emit("user-voted", { userName });
+  }
+
   // Utility methods
   getRoomClients(roomId: string) {
     return this.io.sockets.adapter.rooms.get(roomId);
