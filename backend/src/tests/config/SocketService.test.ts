@@ -130,4 +130,20 @@ describe("SocketService", () => {
     expect(clients).toBeDefined();
     expect(clients?.size).toBe(1);
   });
+
+  it("should emit user-voted event", (done) => {
+    const roomId = "test-room";
+    const userName = "Test User";
+
+    clientSocket.emit("join-room", roomId);
+
+    clientSocket.on("user-voted", (data) => {
+      expect(data.userName).toEqual(userName);
+      done();
+    });
+
+    setTimeout(() => {
+      socketService.emitNewVote(roomId, userName);
+    }, 100);
+  });
 });
