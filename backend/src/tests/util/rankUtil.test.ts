@@ -62,19 +62,26 @@ describe('rankUtil', () => {
       const expected = [
         { winner: 0, loser: 2, margin: 4 },
         { winner: 1, loser: 0, margin: 2 },
+        { winner: 1, loser: 2, margin: 0 },
       ];
 
       expect(ranked).toEqual(expected);
     });
 
-    it('should return an empty array when there are no winning pairs (all ties)', () => {
+    it('should include tied pairs with a margin of 0', () => {
       const preferences = [
         [0, 5, 5],
         [5, 0, 5],
         [5, 5, 0],
       ];
       const ranked = rankPairs(preferences);
-      expect(ranked).toEqual([]);
+      const expected = [
+        { winner: 0, loser: 1, margin: 0 },
+        { winner: 0, loser: 2, margin: 0 },
+        { winner: 1, loser: 2, margin: 0 },
+      ];
+      expect(ranked).toEqual(expect.arrayContaining(expected));
+      expect(ranked.length).toBe(expected.length);
     });
 
     it('should maintain order when margins are equal', () => {
