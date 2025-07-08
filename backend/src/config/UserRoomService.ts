@@ -71,4 +71,24 @@ export default class UserRoomService {
       return getRedisError(error);
     }
   }
+
+  async checkUserVoted(
+    roomId: string,
+    userName: string,
+  ): Promise<[Error | null, boolean, number]> {
+    try {
+      const exists = await redisClient.sIsMember(
+        `room:${roomId}:voted`,
+        userName,
+      );
+      if (exists) {
+        return [null, true, 200];
+      } else {
+        return [null, false, 200];
+      }
+    } catch (error: unknown) {
+      const [err, code] = getRedisError(error);
+      return [err, false, code];
+    }
+  }
 }
