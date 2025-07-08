@@ -72,27 +72,27 @@ function rankPairs(preferences: number[][]): RankedPair[] {
 }
 
 function hasCycle(graph: number[][], startNode: number, endNode: number): boolean {
-  const queue = [endNode];
   const visited = new Set<number>();
 
-  while (queue.length > 0) {
-    const currentNode = queue.shift()!;
-    if (currentNode === startNode) {
-      return true;
-    }
-    if (visited.has(currentNode)) {
-      continue;
-    }
+  function dfs(currentNode: number): boolean {
     visited.add(currentNode);
 
     for (let neighbor = 0; neighbor < graph.length; neighbor++) {
       if (graph[currentNode][neighbor] === 1) {
-        queue.push(neighbor);
+        if (neighbor === startNode) {
+          return true; // Cycle detected
+        }
+        if (!visited.has(neighbor)) {
+          if (dfs(neighbor)) {
+            return true;
+          }
+        }
       }
     }
+    return false;
   }
 
-  return false;
+  return dfs(endNode);
 }
 
 function lockEdges(rankedPairs: RankedPair[], nominees: number): number[][] {
