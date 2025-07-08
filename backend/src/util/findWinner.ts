@@ -34,3 +34,36 @@ function createPreferencesArray(
 
   return preferences;
 }
+
+interface RankedPair {
+  winner: number;
+  loser: number;
+  margin: number;
+}
+function rankPairs(preferences: number[][]): RankedPair[] {
+  const rankedPairs = [];
+  const nominees = preferences.length;
+
+  for (let i = 0; i < nominees; i++) {
+    for (let j = i + 1; j < nominees; j++) {
+      const votesForI = preferences[i][j];
+      const votesForJ = preferences[j][i];
+
+      if (votesForI > votesForJ) {
+        rankedPairs.push({
+          winner: i,
+          loser: j,
+          margin: votesForI - votesForJ,
+        });
+      } else if (votesForJ > votesForI) {
+        rankedPairs.push({
+          winner: j,
+          loser: i,
+          margin: votesForJ - votesForI,
+        });
+      }
+    }
+  }
+
+  return rankedPairs.sort((a, b) => b.margin - a.margin);
+}
