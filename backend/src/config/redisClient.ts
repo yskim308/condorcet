@@ -1,4 +1,4 @@
-import { createClient } from "redis";
+import { createClient, RedisClientType } from "redis";
 
 export const redisClient = createClient({
   url: "redis://redis:6379",
@@ -7,3 +7,5 @@ export const redisClient = createClient({
 if (process.env.NODE_ENV !== "test") {
   redisClient.connect();
 }
+
+export type { RedisClientType };
