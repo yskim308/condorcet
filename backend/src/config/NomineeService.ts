@@ -1,10 +1,15 @@
-import { redisClient } from "./redisClient";
+import type { RedisClientType } from "redis";
 import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
 
-class NomineeService {
+export default class NomineeService {
+  private redisClient: RedisClientType;
+
+  constructor(redisClient: RedisClientType) {
+    this.redisClient = redisClient;
+  }
   async setNomineeCount(roomId: string): Promise<[Error | null, number]> {
     try {
-      await redisClient.set(`room:${roomId}:nominee_count`, -1);
+      await this.redisClient.set(`room:${roomId}:nominee_count`, -1);
       return [null, 200];
     } catch (error: unknown) {
       console.error("error setting nominee count: " + getErrorMessage(error));
@@ -16,7 +21,7 @@ class NomineeService {
     roomId: string,
   ): Promise<[Error | null, number | null, number]> {
     try {
-      const count = await redisClient.get(`room:${roomId}:nominee_count`);
+      const count = await this.redisClient.get(`room:${roomId}:nominee_count`);
       if (!count) {
         return [null, null, 200];
       }
@@ -33,8 +38,14 @@ class NomineeService {
     nominee: string,
   ): Promise<[Error | null, number]> {
     try {
-      const nominee_id = await redisClient.incr(`room:${roomId}:nominee_count`);
-      await redisClient.hset(`room:${roomId}:nominees`, nominee_id, nominee);
+      const nominee_id = await this.redisClient.incr(
+        `room:${roomId}:nominee_count`,
+      );
+      await this.redisClient.hSet(
+        `room:${roomId}:nominees`,
+        nominee_id,
+        nominee,
+      );
       return [null, 200];
     } catch (error: unknown) {
       console.error("error adding nominee: " + getErrorMessage(error));
@@ -47,7 +58,9 @@ class NomineeService {
   ): Promise<[Error | null, Record<string, string> | null, number]> {
     try {
       // HGETALL returns an object where keys are fields and values are their corresponding values.
-      const nominees = await redisClient.hGetAll(`room:${roomId}:nominees`);
+      const nominees = await this.redisClient.hGetAll(
+        `room:${roomId}:nominees`,
+      );
 
       return [null, nominees, 200];
     } catch (error: unknown) {
@@ -65,7 +78,10 @@ class NomineeService {
     try {
       // Serialize the array to a JSON string to preserve its structure
       const serializedPreferences = JSON.stringify(preferences);
-      await redisClient.lPush(`room:${roomId}:votes`, serializedPreferences);
+      await this.redisClient.lPush(
+        `room:${roomId}:votes`,
+        serializedPreferences,
+      );
       return [null, 200];
     } catch (error: unknown) {
       console.error(
@@ -79,7 +95,7 @@ class NomineeService {
     roomId: string,
   ): Promise<[Error | null, string[][] | null, number]> {
     try {
-      const votesAsJson = await redisClient.lRange(
+      const votesAsJson = await this.redisClient.lRange(
         `room:${roomId}:votes`,
         0,
         -1,
@@ -97,6 +113,3 @@ class NomineeService {
     }
   }
 }
-
-const nomineeService = new NomineeService();
-export default nomineeService;
