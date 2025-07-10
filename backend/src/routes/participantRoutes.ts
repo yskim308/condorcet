@@ -130,5 +130,28 @@ export const createParticipantRouter = (socketService: SocketService) => {
     },
   );
 
+  interface getUsersBody {
+    roomId: number;
+  }
+  router.get(
+    "/room/:roomId/getUsers",
+    async (req: express.Request, res: express.Response) => {
+      try {
+        const { roomId } = req.params;
+        const [err, users, code] = await userRoomService.getUsers(roomId);
+        if (err) {
+          res.status(code).json({
+            error: `failed to get users from room: ${err.message}`,
+          });
+          return;
+        }
+        res.status(200).json({ users });
+      } catch (error: unknown) {
+        console.error("error getting users ", error);
+        res.status(500).json({ error: "failed to getUsers in room" });
+      }
+    },
+  );
+
   return router;
 };
