@@ -1,7 +1,7 @@
 import express from "express";
-import RoomService from "../config/RoomService";
-import NomineeService from "../config/NomineeService";
-import UserRoomService from "../config/UserRoomService";
+import roomService from "../config/RoomService";
+import nomineeService from "../config/NomineeService";
+import userRoomService from "../config/UserRoomService";
 import { randomBytes } from "crypto";
 import { verifyHost } from "../middleware/verifyHost";
 import SocketService from "../config/SocketService";
@@ -17,10 +17,6 @@ export interface RoomData {
 
 export const createHostRouter = (socketService: SocketService) => {
   const router = express.Router();
-  const roomService = new RoomService();
-  const nomineeService = new NomineeService();
-  const userRoomService = new UserRoomService();
-
   interface createBody {
     roomName: string;
     userName: string;
@@ -156,7 +152,9 @@ export const createHostRouter = (socketService: SocketService) => {
         if (err) {
           res
             .status(code)
-            .json({ error: `redis failed to update room state: ${err.message}` });
+            .json({
+              error: `redis failed to update room state: ${err.message}`,
+            });
           return;
         }
 
@@ -177,3 +175,4 @@ export const createHostRouter = (socketService: SocketService) => {
 
   return router;
 };
+

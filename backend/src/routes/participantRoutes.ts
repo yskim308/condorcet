@@ -1,14 +1,11 @@
 import express from "express";
-import UserRoomService from "../config/UserRoomService";
-import RoomService from "../config/RoomService";
+import userRoomService from "../config/UserRoomService";
+import roomService from "../config/RoomService";
 import SocketService from "../config/SocketService";
-import NomineeService from "../config/NomineeService";
+import nomineeService from "../config/NomineeService";
 
 export const createParticipantRouter = (socketService: SocketService) => {
   const router = express.Router();
-  const roomService = new RoomService();
-  const userRoomService = new UserRoomService();
-  const nomineeService = new NomineeService();
 
   interface joinBody {
     roomId: string;
