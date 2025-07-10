@@ -2,11 +2,13 @@ import express from "express";
 import UserRoomService from "../config/UserRoomService";
 import RoomService from "../config/RoomService";
 import SocketService from "../config/SocketService";
+import NomineeService from "../config/NomineeService";
 
 export const createParticipantRouter = (socketService: SocketService) => {
   const router = express.Router();
   const roomService = new RoomService();
   const userRoomService = new UserRoomService();
+  const nomineeService = new NomineeService();
 
   interface joinBody {
     roomId: string;
@@ -130,9 +132,6 @@ export const createParticipantRouter = (socketService: SocketService) => {
     },
   );
 
-  interface getUsersBody {
-    roomId: number;
-  }
   router.get(
     "/room/:roomId/getUsers",
     async (req: express.Request, res: express.Response) => {
@@ -149,6 +148,51 @@ export const createParticipantRouter = (socketService: SocketService) => {
       } catch (error: unknown) {
         console.error("error getting users ", error);
         res.status(500).json({ error: "failed to getUsers in room" });
+      }
+    },
+  );
+
+  interface VoteBody {
+    vote: string[];
+    userName: string;
+  }
+  router.post(
+    "/room/:roomId/vote",
+    async (req: express.Request, res: express.Response) => {
+      try {
+        const { vote, userName }: VoteBody = req.body;
+        const { roomId } = req.params;
+
+        // check if user already voted
+        const [checkErr, voted, checkCode] =
+          await userRoomService.checkUserVoted(roomId, userName);
+        if (checkErr) {
+          res.status(checkCode).json({
+            error: `failed to check if user voted: ${checkErr.message}`,
+          });
+          return;
+        }
+        if (voted) {
+          res.status(404).json({ error: "user already voted" });
+          return;
+        }
+
+        // set the vote in redis
+        const [voteErr, voteCode] = await nomineeService.saveVote(roomId, vote);
+        if (voteErr) {
+          res
+            .status(voteCode)
+            .json({ error: `failed to save vote: ${voteErr.message}` });
+        }
+
+        // emit on socket
+        socketService.emitNewVote(roomId, userName);
+
+        res.status(200).json({ message: "vote saved" });
+        return;
+      } catch (error: unknown) {
+        console.error("error posting vote: ", error);
+        res.status(500).json({ error: "failed to register vote" });
       }
     },
   );
