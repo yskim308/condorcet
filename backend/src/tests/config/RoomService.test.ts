@@ -15,10 +15,10 @@ mock.module("../../config/redisClient", () => ({
 describe("RoomService", () => {
   it("should create a room", async () => {
     const roomData: RoomData = {
-      roomName: "Test Room",
-      hostName: "Test Host",
-      hostKey: "test-key",
+      name: "room123",
       state: "nominating",
+      host: "user123",
+      hostKey: "test-host-key",
     };
     const [error, status] = await roomService.createRoom("room123", roomData);
 
@@ -58,3 +58,4 @@ describe("RoomService", () => {
     expect(status).toBe(200);
   });
 });
+
