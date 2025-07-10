@@ -42,16 +42,12 @@ const mockUserRoomService = {
 
 mock.module("../../config/RoomService", () => ({
   __esModule: true,
-  default: function () {
-    return mockRoomService;
-  },
+  default: mockRoomService,
 }));
 
 mock.module("../../config/UserRoomService", () => ({
   __esModule: true,
-  default: function () {
-    return mockUserRoomService;
-  },
+  default: mockUserRoomService,
 }));
 
 // Import after mocking
@@ -96,13 +92,13 @@ describe("Participant Router", () => {
       expect(mockRoomService.getState).toHaveBeenCalledWith("test-room-123");
       expect(mockUserRoomService.enrollUser).toHaveBeenCalledWith(
         "test-room-123",
-        "testUser"
+        "testUser",
       );
 
       // Verify Socket.IO emission
       expect(mockSocketService.emitNewUser).toHaveBeenCalledWith(
         "test-room-123",
-        "testUser"
+        "testUser",
       );
     });
 
