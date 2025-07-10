@@ -1,7 +1,7 @@
 import { redisClient } from "./redisClient";
 import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
 
-export default class UserRoomService {
+class UserRoomService {
   async enrollUser(
     roomId: string,
     userName: string,
@@ -92,3 +92,6 @@ export default class UserRoomService {
     }
   }
 }
+
+const userRoomService = new UserRoomService();
+export default userRoomService;

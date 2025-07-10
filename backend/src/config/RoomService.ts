@@ -2,7 +2,7 @@ import { redisClient } from "./redisClient";
 import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
 import type { RoomData } from "../routes/hostRoutes";
 
-export default class RoomService {
+class RoomService {
   async createRoom(
     roomId: string,
     roomData: RoomData,
@@ -70,3 +70,6 @@ export default class RoomService {
     }
   }
 }
+
+const roomService = new RoomService();
+export default roomService;
