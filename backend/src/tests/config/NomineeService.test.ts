@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
-import NomineeService from "../../config/NomineeService";
+import nomineeService from "../../config/NomineeService";
 
 const mockRedisClient = {
   set: mock(async (key: string, value: any) => {}),
@@ -19,10 +19,7 @@ mock.module("../../config/redisClient", () => ({
 }));
 
 describe("NomineeService", () => {
-  let nomineeService: NomineeService;
-
   beforeEach(() => {
-    nomineeService = new NomineeService();
     mockRedisClient.set.mockClear();
     mockRedisClient.get.mockClear();
     mockRedisClient.incr.mockClear();

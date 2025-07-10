@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
-import UserRoomService from "../../config/UserRoomService";
+import userRoomService from "../../config/UserRoomService";
 
 const mockRedisClient = {
   sAdd: mock(async (key: string, value: any) => {}),
@@ -13,10 +13,8 @@ mock.module("../../config/redisClient", () => ({
 }));
 
 describe("UserRoomService", () => {
-  let userRoomService: UserRoomService;
 
   beforeEach(() => {
-    userRoomService = new UserRoomService();
     mockRedisClient.sAdd.mockImplementation(async (key: string, value: any) => {});
     mockRedisClient.sIsMember.mockImplementation(async (key: string, value: any) => true);
     mockRedisClient.sMembers.mockImplementation(async (key: string) => []);

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { describe, it, expect, mock } from "bun:test";
+import roomService from "../../config/RoomService";
 import type { RoomData } from "../../routes/hostRoutes";
-import type RoomServiceType from "../../config/RoomService";
 
 // Mock the redisClient dependency for all tests in this file
 mock.module("../../config/redisClient", () => ({
@@ -13,16 +13,6 @@ mock.module("../../config/redisClient", () => ({
 }));
 
 describe("RoomService", () => {
-  let roomService: RoomServiceType;
-
-  // Before each test, dynamically import the real RoomService to bypass mocks from other files
-  beforeEach(async () => {
-    const { default: RoomServiceActual } = await import(
-      "../../config/RoomService?v=" + Math.random()
-    );
-    roomService = new RoomServiceActual();
-  });
-
   it("should create a room", async () => {
     const roomData: RoomData = {
       roomName: "Test Room",
