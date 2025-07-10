@@ -59,23 +59,17 @@ const mockUserRoomService = {
 
 mock.module("../../config/RoomService", () => ({
   __esModule: true,
-  default: function () {
-    return mockRoomService;
-  },
+  default: mockRoomService,
 }));
 
 mock.module("../../config/NomineeService", () => ({
   __esModule: true,
-  default: function () {
-    return mockNomineeService;
-  },
+  default: mockNomineeService,
 }));
 
 mock.module("../../config/UserRoomService", () => ({
   __esModule: true,
-  default: function () {
-    return mockUserRoomService;
-  },
+  default: mockUserRoomService,
 }));
 
 // Import after mocking
@@ -172,11 +166,11 @@ describe("Host Routes", () => {
       });
       expect(mockNomineeService.addNominee).toHaveBeenCalledWith(
         "room123",
-        "John Doe"
+        "John Doe",
       );
       expect(mockSocketService.emitNewNomination).toHaveBeenCalledWith(
         "room123",
-        "John Doe"
+        "John Doe",
       );
     });
 
@@ -260,11 +254,11 @@ describe("Host Routes", () => {
       });
       expect(mockRoomService.updateState).toHaveBeenCalledWith(
         "room123",
-        "voting"
+        "voting",
       );
       expect(mockSocketService.emitStateChange).toHaveBeenCalledWith(
         "room123",
-        "voting"
+        "voting",
       );
     });
 
