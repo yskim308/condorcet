@@ -1,7 +1,5 @@
 import express from "express";
-import RoomService from "../config/RoomService";
-
-const roomService = new RoomService();
+import roomService from "../config/RoomService";
 
 export const verifyHost = async (
   req: express.Request,
