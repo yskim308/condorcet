@@ -13,10 +13,7 @@ const mockRoomService = {
 };
 
 mock.module("../../config/RoomService", () => ({
-  __esModule: true,
-  default: function () {
-    return mockRoomService;
-  },
+  default: mockRoomService,
 }));
 
 // Import after mocking
