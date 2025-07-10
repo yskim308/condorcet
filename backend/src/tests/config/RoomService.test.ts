@@ -1,18 +1,34 @@
-import { describe, it, expect, mock } from "bun:test";
+import { describe, it, expect, mock, beforeEach } from "bun:test";
 import roomService from "../../config/RoomService";
 import type { RoomData } from "../../routes/hostRoutes";
 
+const mockRedisClient = {
+  set: mock(async (key: string, value: any) => {}),
+  get: mock(async (key: string) => "1"),
+  incr: mock(async (key: string) => 1),
+  hset: mock(async (key: string, field: string, value: any) => {}),
+  hGetAll: mock(async (key: string) => ({ "1": "John Doe" })),
+  lPush: mock(async (key: string, value: any) => {}),
+  lRange: mock(async (key: string, start: number, stop: number) => [
+    JSON.stringify(["John Doe"]),
+  ]),
+};
 // Mock the redisClient dependency for all tests in this file
 mock.module("../../config/redisClient", () => ({
   __esModule: true,
-  redisClient: {
-    hset: mock(async (key: string, value: any) => {}),
-    hget: mock(async (key: string, field: string) => "test-host-key"),
-    exists: mock(async (key: string) => 1),
-  },
+  redisClient: mockRedisClient,
 }));
 
 describe("RoomService", () => {
+  beforeEach(() => {
+    mockRedisClient.set.mockClear();
+    mockRedisClient.get.mockClear();
+    mockRedisClient.incr.mockClear();
+    mockRedisClient.hset.mockClear();
+    mockRedisClient.hGetAll.mockClear();
+    mockRedisClient.lPush.mockClear();
+    mockRedisClient.lRange.mockClear();
+  });
   it("should create a room", async () => {
     const roomData: RoomData = {
       name: "room123",
@@ -58,4 +74,3 @@ describe("RoomService", () => {
     expect(status).toBe(200);
   });
 });
-
