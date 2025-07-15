@@ -1,6 +1,6 @@
-import { createClient } from "redis";
+import { createClient, type RedisClientType } from "redis";
 
-export const redisClient = createClient({
+export const redisClient: RedisClientType = createClient({
   url: "redis://redis:6379",
 });
 
