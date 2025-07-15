@@ -2,7 +2,14 @@ import express from "express";
 import cors from "cors";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
+
+// service imports
 import SocketService from "./config/SocketService";
+import NomineeService from "./config/NomineeService";
+import UserRoomService from "./config/UserRoomService";
+import RoomService from "./config/RoomService";
+import { createVerifyHostMiddleware } from "./middleware/verifyHost";
+import { redisClient } from "./config/redisClient";
 import { createHostRouter } from "./routes/hostRoutes";
 import { createParticipantRouter } from "./routes/participantRoutes";
 
@@ -19,10 +26,25 @@ const io = new Server(server, {
   },
 });
 
-export const socketService = new SocketService(io);
+const socketService = new SocketService(io);
+const roomService = new RoomService(redisClient);
+const userRoomService = new UserRoomService(redisClient);
+const nomineeService = new NomineeService(redisClient);
 
-const hostRoutes = createHostRouter(socketService);
-const participantRoutes = createParticipantRouter(socketService);
+const hostRoutes = createHostRouter(
+  socketService,
+  roomService,
+  nomineeService,
+  userRoomService,
+  createVerifyHostMiddleware,
+);
+
+const participantRoutes = createParticipantRouter(
+  socketService,
+  userRoomService,
+  roomService,
+  nomineeService,
+);
 
 app.use(cors());
 app.use(express.json());
