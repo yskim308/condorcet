@@ -84,7 +84,7 @@ class UserRoomService {
     userName: string,
   ): Promise<[Error | null, boolean, number]> {
     try {
-      const exists = await redisClient.sIsMember(
+      const exists = await this.redisClient.sIsMember(
         `room:${roomId}:voted`,
         userName,
       );
