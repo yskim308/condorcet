@@ -1,7 +1,13 @@
 import type express from "express";
 import type RoomService from "../config/RoomService";
 
-export const createVerifyHostMiddleware = (roomService: RoomService) => {
+export type CreateVerifyHostMiddleware = (roomService: RoomService) => (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => Promise<void>;
+
+export const createVerifyHostMiddleware: CreateVerifyHostMiddleware = (roomService) => {
   return async (
     req: express.Request,
     res: express.Response,
