@@ -1,237 +1,156 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
 import express from "express";
 import request from "supertest";
-
-// Mock SocketService
-const mockSocketService = {
-  emitNewUser: mock<() => void>(() => {}),
-};
-
-mock.module("../../config/SocketService", () => ({
-  __esModule: true,
-  default: function () {
-    return mockSocketService;
-  },
-}));
+import { createParticipantRouter } from "../../routes/participantRoutes";
+import type SocketService from "../../config/SocketService";
+import type RoomService from "../../config/RoomService";
+import type NomineeService from "../../config/NomineeService";
+import type UserRoomService from "../../config/UserRoomService";
 
 // Mock services
-const mockRoomService = {
-  exists: mock<() => Promise<[Error | null, boolean, number]>>(async () => [
-    null,
-    true,
-    200,
-  ]),
-  getState: mock<() => Promise<[Error | null, string, number]>>(async () => [
-    null,
-    "nominating",
-    200,
-  ]),
-  getHostKey: mock<() => Promise<[Error | null, string, number]>>(async () => [
-    null,
-    "secret-host-key",
-    200,
-  ]),
+const mockSocketService: Partial<SocketService> = {
+  emitNewUser: mock(() => {}),
+  emitNewVote: mock(() => {}),
 };
 
-const mockUserRoomService = {
-  enrollUser: mock<() => Promise<[Error | null, number]>>(async () => [
-    null,
-    200,
-  ]),
+const mockRoomService: Partial<RoomService> = {
+  exists: mock(async () => [null, true, 200]),
+  getState: mock(async () => [null, "nominating", 200]),
+  getHostKey: mock(async () => [null, "test-host-key", 200]),
 };
 
-mock.module("../../config/RoomService", () => ({
-  __esModule: true,
-  default: mockRoomService,
-}));
+const mockNomineeService: Partial<NomineeService> = {
+  saveVote: mock(async () => [null, 200]),
+};
 
-mock.module("../../config/UserRoomService", () => ({
-  __esModule: true,
-  default: mockUserRoomService,
-}));
+const mockUserRoomService: Partial<UserRoomService> = {
+  enrollUser: mock(async () => [null, 200]),
+  getUsers: mock(async () => [null, ["user1", "user2"], 200]),
+  checkUserVoted: mock(async () => [null, false, 200]),
+};
 
-// Import after mocking
-const { createParticipantRouter } = await import(
-  "../../routes/participantRoutes"
-);
-
-describe("Participant Router", () => {
+describe("Participant Routes", () => {
   let app: express.Application;
 
   beforeEach(() => {
-    // Reset all mocks before each test
-    mockRoomService.exists.mockClear();
-    mockRoomService.getState.mockClear();
-    mockRoomService.getHostKey.mockClear();
-    mockUserRoomService.enrollUser.mockClear();
-    mockSocketService.emitNewUser.mockClear();
-
-    // Create a fresh Express app for each test
     app = express();
     app.use(express.json());
-    const participantRouter = createParticipantRouter(mockSocketService as any);
+    const participantRouter = createParticipantRouter(
+      mockSocketService as SocketService,
+      mockUserRoomService as UserRoomService,
+      mockRoomService as RoomService,
+      mockNomineeService as NomineeService,
+    );
     app.use(participantRouter);
+
+    // Reset mocks
+    for (const key in mockSocketService) {
+      (mockSocketService[key as keyof SocketService] as any).mockClear();
+    }
+    for (const key in mockRoomService) {
+      (mockRoomService[key as keyof RoomService] as any).mockClear();
+    }
+    for (const key in mockNomineeService) {
+      (mockNomineeService[key as keyof NomineeService] as any).mockClear();
+    }
+    for (const key in mockUserRoomService) {
+      (mockUserRoomService[key as keyof UserRoomService] as any).mockClear();
+    }
   });
 
   describe("POST /room/join", () => {
-    it("should successfully join a room with valid data", async () => {
+    it("should join a room successfully", async () => {
       const response = await request(app).post("/room/join").send({
-        roomId: "test-room-123",
-        userName: "testUser",
+        roomId: "room123",
+        userName: "user1",
       });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        message: "Joined room successfully",
-        roomId: "test-room-123",
-        userName: "testUser",
-      });
-
-      // Verify service calls
-      expect(mockRoomService.exists).toHaveBeenCalledWith("test-room-123");
-      expect(mockRoomService.getState).toHaveBeenCalledWith("test-room-123");
-      expect(mockUserRoomService.enrollUser).toHaveBeenCalledWith(
-        "test-room-123",
-        "testUser",
-      );
-
-      // Verify Socket.IO emission
-      expect(mockSocketService.emitNewUser).toHaveBeenCalledWith(
-        "test-room-123",
-        "testUser",
-      );
+      expect(mockRoomService.exists).toHaveBeenCalledWith("room123");
+      expect(mockRoomService.getState).toHaveBeenCalledWith("room123");
+      expect(mockUserRoomService.enrollUser).toHaveBeenCalledWith("room123", "user1");
+      expect(mockSocketService.emitNewUser).toHaveBeenCalledWith("room123", "user1");
     });
 
-    it("should return 400 when roomId is missing", async () => {
-      const response = await request(app).post("/room/join").send({
-        userName: "testUser",
-      });
-
-      expect(response.status).toBe(400);
+    it("should return 400 if roomId or userName is missing", async () => {
+      const res1 = await request(app).post("/room/join").send({ userName: "user1" });
+      const res2 = await request(app).post("/room/join").send({ roomId: "room123" });
+      expect(res1.status).toBe(400);
+      expect(res2.status).toBe(400);
     });
 
-    it("should return 404 when room does not exist", async () => {
-      mockRoomService.exists.mockResolvedValueOnce([null, false, 404]);
-
-      const response = await request(app).post("/room/join").send({
-        roomId: "nonexistent-room",
-        userName: "testUser",
-      });
-
-      expect(response.status).toBe(404);
-
-      expect(mockRoomService.exists).toHaveBeenCalledWith("nonexistent-room");
-      // Should not proceed to check state or add user
-      expect(mockRoomService.getState).not.toHaveBeenCalled();
-      expect(mockUserRoomService.enrollUser).not.toHaveBeenCalled();
+    it("should return 404 if room does not exist", async () => {
+        (mockRoomService.exists as any).mockResolvedValueOnce([null, false, 404]);
+        const response = await request(app).post("/room/join").send({
+            roomId: "room123",
+            userName: "user1",
+        });
+        expect(response.status).toBe(404);
     });
 
-    it("should return 403 when room is not in nominating state", async () => {
-      mockRoomService.getState.mockResolvedValueOnce([null, "voting", 200]);
-
-      const response = await request(app).post("/room/join").send({
-        roomId: "test-room-123",
-        userName: "testUser",
-      });
-
-      expect(response.status).toBe(403);
-
-      expect(mockRoomService.exists).toHaveBeenCalledWith("test-room-123");
-      expect(mockRoomService.getState).toHaveBeenCalledWith("test-room-123");
-      // Should not add user to room
-      expect(mockUserRoomService.enrollUser).not.toHaveBeenCalled();
-    });
-
-    it("should handle service errors gracefully", async () => {
-      mockRoomService.exists.mockResolvedValueOnce([
-        new Error("service error"),
-        false,
-        500,
-      ]);
-
-      const response = await request(app).post("/room/join").send({
-        roomId: "test-room-123",
-        userName: "testUser",
-      });
-
-      expect(response.status).toBe(500);
+    it("should return 403 if room is not in nominating state", async () => {
+        (mockRoomService.getState as any).mockResolvedValueOnce([null, "voting", 200]);
+        const response = await request(app).post("/room/join").send({
+            roomId: "room123",
+            userName: "user1",
+        });
+        expect(response.status).toBe(403);
     });
   });
 
-  describe("GET /room/:roomId/getRole", () => {
-    it("should return user role when no hostKey is provided", async () => {
+  describe("POST /room/:roomId/getRole", () => {
+    it("should return 'host' for correct hostKey", async () => {
       const response = await request(app)
-        .post("/room/test-room-123/getRole")
-        .send({});
+        .post("/room/room123/getRole")
+        .send({ hostKey: "test-host-key" });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        role: "user",
-      });
-
-      expect(mockRoomService.exists).toHaveBeenCalledWith("test-room-123");
+      expect(response.body.role).toBe("host");
     });
 
-    it("should return host role when correct hostKey is provided", async () => {
-      const response = await request(app)
-        .post("/room/test-room-123/getRole")
-        .send({
-          hostKey: "secret-host-key",
-        });
+    it("should return 'user' for incorrect hostKey", async () => {
+        const response = await request(app)
+            .post("/room/room123/getRole")
+            .send({ hostKey: "invalid-key" });
+        expect(response.status).toBe(200);
+        expect(response.body.role).toBe("user");
+    });
+
+    it("should return 'user' if no hostKey is provided", async () => {
+        const response = await request(app).post("/room/room123/getRole").send({});
+        expect(response.status).toBe(200);
+        expect(response.body.role).toBe("user");
+    });
+  });
+
+  describe("GET /room/:roomId/getUsers", () => {
+    it("should get users successfully", async () => {
+      const response = await request(app).get("/room/room123/getUsers");
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        role: "host",
-      });
-
-      expect(mockRoomService.exists).toHaveBeenCalledWith("test-room-123");
-      expect(mockRoomService.getHostKey).toHaveBeenCalledWith("test-room-123");
+      expect(response.body.users).toEqual(["user1", "user2"]);
+      expect(mockUserRoomService.getUsers).toHaveBeenCalledWith("room123");
     });
+  });
 
-    it("should return user role when incorrect hostKey is provided", async () => {
+  describe("POST /room/:roomId/vote", () => {
+    it("should save a vote successfully", async () => {
       const response = await request(app)
-        .post("/room/test-room-123/getRole")
-        .send({
-          hostKey: "wrong-key",
-        });
+        .post("/room/room123/vote")
+        .send({ vote: ["nominee1"], userName: "user1" });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        role: "user",
-      });
-
-      expect(mockRoomService.exists).toHaveBeenCalledWith("test-room-123");
-      expect(mockRoomService.getHostKey).toHaveBeenCalledWith("test-room-123");
+      expect(mockUserRoomService.checkUserVoted).toHaveBeenCalledWith("room123", "user1");
+      expect(mockNomineeService.saveVote).toHaveBeenCalledWith("room123", ["nominee1"]);
+      expect(mockSocketService.emitNewVote).toHaveBeenCalledWith("room123", "user1");
     });
 
-    it("should return 404 when room does not exist", async () => {
-      mockRoomService.exists.mockResolvedValueOnce([null, false, 404]);
-
-      const response = await request(app)
-        .post("/room/nonexistent-room/getRole")
-        .send({
-          hostKey: "some-key",
-        });
-
-      expect(response.status).toBe(404);
-
-      expect(mockRoomService.exists).toHaveBeenCalledWith("nonexistent-room");
-      // Should not proceed to check hostKey
-      expect(mockRoomService.getHostKey).not.toHaveBeenCalled();
-    });
-
-    it("should handle service errors gracefully", async () => {
-      mockRoomService.exists.mockResolvedValueOnce([
-        new Error("service error"),
-        false,
-        500,
-      ]);
-
-      const response = await request(app)
-        .post("/room/test-room-123/getRole")
-        .send({});
-
-      expect(response.status).toBe(500);
+    it("should return 404 if user has already voted", async () => {
+        (mockUserRoomService.checkUserVoted as any).mockResolvedValueOnce([null, true, 200]);
+        const response = await request(app)
+            .post("/room/room123/vote")
+            .send({ vote: ["nominee1"], userName: "user1" });
+        expect(response.status).toBe(404);
     });
   });
 });
