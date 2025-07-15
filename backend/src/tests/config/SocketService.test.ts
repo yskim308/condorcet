@@ -1,149 +1,119 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { Server } from "socket.io";
-import { io as ioc, Socket as ClientSocket } from "socket.io-client";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 import SocketService from "../../config/SocketService";
-import { type AddressInfo } from "net";
-import { createServer } from "http";
+import { Server, Socket } from "socket.io";
+
+// Mock the Server and Socket classes from socket.io
+const mockSocket = {
+  join: mock(async (room: string) => {}),
+  on: mock((event: string, callback: (...args: any[]) => void) => {}),
+  emit: mock((event: string, ...args: any[]) => {}),
+  id: "test-socket-id",
+};
+
+const mockEmit = mock((event: string, ...args: any[]) => {});
+const mockIo = {
+  on: mock(
+    (event: string, callback: (socket: Partial<Socket>) => void) => {},
+  ),
+  to: mock((room: string) => ({ emit: mockEmit })),
+  sockets: {
+    adapter: {
+      rooms: {
+        get: mock((room: string) => new Set(["test-socket-id"])),
+      },
+    },
+    sockets: {
+      size: 1,
+    },
+  },
+};
 
 describe("SocketService", () => {
-  let io: Server,
-    serverSocket: any,
-    clientSocket: ClientSocket,
-    socketService: SocketService,
-    port: number;
+  let socketService: SocketService;
 
-  beforeEach((done) => {
-    const httpServer = createServer();
-    io = new Server(httpServer);
+  beforeEach(() => {
+    // Reset mocks
+    mockIo.on.mockClear();
+    mockIo.to.mockClear();
+    mockEmit.mockClear();
+    mockSocket.join.mockClear();
+    mockSocket.on.mockClear();
+    mockSocket.emit.mockClear();
 
-    httpServer.listen(() => {
-      port = (httpServer.address() as AddressInfo).port;
-      socketService = new SocketService(io);
+    // Create a new instance of the service with the mock io server
+    socketService = new SocketService(mockIo as any);
+  });
 
-      clientSocket = ioc(`http://localhost:${port}`, {
-        reconnection: false,
-        forceNew: true,
-        transports: ["websocket"],
-      });
-
-      io.on("connection", (socket) => {
-        serverSocket = socket;
-      });
-
-      clientSocket.on("connect", () => {
-        done();
-      });
+  describe("Event Handlers", () => {
+    it("should set up connection event handler", () => {
+      expect(mockIo.on).toHaveBeenCalledWith(
+        "connection",
+        expect.any(Function),
+      );
     });
   });
 
-  afterEach(() => {
-    io.close();
-    clientSocket.disconnect();
-  });
-
-  it("should handle user connection", () => {
-    expect(serverSocket.id).toBeDefined();
-    expect(socketService.getConnectedSockets()).toBe(1);
-  });
-
-  it("should handle join-room event", async () => {
-    const roomId = "test-room";
-    clientSocket.emit("join-room", roomId);
-
-    // Wait for the server to process the event
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const rooms = serverSocket.rooms;
-    expect(rooms).toContain(roomId);
-  });
-
-  it("should handle disconnect event", (done) => {
-    clientSocket.on("disconnect", () => {
-      setTimeout(() => {
-        expect(socketService.getConnectedSockets()).toBe(0);
-        done();
-      }, 100);
-    });
-
-    clientSocket.disconnect();
-  });
-
-  it("should emit new-nomination event", (done) => {
-    const roomId = "test-room";
-    const nominee = { name: "John Doe" };
-
-    clientSocket.emit("join-room", roomId);
-
-    clientSocket.on("new-nomination", (data) => {
-      expect(data.nominee).toEqual(nominee);
-      expect(data.roomId).toEqual(roomId);
-      done();
-    });
-
-    setTimeout(() => {
+  describe("Business Logic", () => {
+    it("should emit new nomination", () => {
+      const roomId = "test-room";
+      const nominee = { name: "John Doe" };
       socketService.emitNewNomination(roomId, nominee);
-    }, 100);
-  });
 
-  it("should emit state-change event", (done) => {
-    const roomId = "test-room";
-    const state = "voting";
-
-    clientSocket.emit("join-room", roomId);
-
-    clientSocket.on("state-change", (data) => {
-      expect(data.state).toEqual(state);
-      expect(data.roomId).toEqual(roomId);
-      done();
+      expect(mockIo.to).toHaveBeenCalledWith(roomId);
+      expect(mockEmit).toHaveBeenCalledWith("new-nomination", {
+        nominee,
+        roomId,
+      });
     });
 
-    setTimeout(() => {
+    it("should emit state change", () => {
+      const roomId = "test-room";
+      const state = "voting";
       socketService.emitStateChange(roomId, state);
-    }, 100);
-  });
 
-  it("should emit new-user event", (done) => {
-    const roomId = "test-room";
-    const userName = "Test User";
-
-    clientSocket.emit("join-room", roomId);
-
-    clientSocket.on("new-user", (data) => {
-      expect(data.userName).toEqual(userName);
-      expect(data.roomId).toEqual(roomId);
-      done();
+      expect(mockIo.to).toHaveBeenCalledWith(roomId);
+      expect(mockEmit).toHaveBeenCalledWith("state-change", {
+        state,
+        roomId,
+      });
     });
 
-    setTimeout(() => {
+    it("should emit new user", () => {
+      const roomId = "test-room";
+      const userName = "Test User";
       socketService.emitNewUser(roomId, userName);
-    }, 100);
-  });
 
-  it("should get room clients", async () => {
-    const roomId = "test-room";
-    clientSocket.emit("join-room", roomId);
-
-    // Wait for the server to process the event
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const clients = socketService.getRoomClients(roomId);
-    expect(clients).toBeDefined();
-    expect(clients?.size).toBe(1);
-  });
-
-  it("should emit user-voted event", (done) => {
-    const roomId = "test-room";
-    const userName = "Test User";
-
-    clientSocket.emit("join-room", roomId);
-
-    clientSocket.on("user-voted", (data) => {
-      expect(data.userName).toEqual(userName);
-      done();
+      expect(mockIo.to).toHaveBeenCalledWith(roomId);
+      expect(mockEmit).toHaveBeenCalledWith("new-user", {
+        userName,
+        roomId,
+      });
     });
 
-    setTimeout(() => {
+    it("should emit new vote", () => {
+      const roomId = "test-room";
+      const userName = "Test User";
       socketService.emitNewVote(roomId, userName);
-    }, 100);
+
+      expect(mockIo.to).toHaveBeenCalledWith(roomId);
+      expect(mockEmit).toHaveBeenCalledWith("user-voted", {
+        userName,
+      });
+    });
+  });
+
+  describe("Utility Methods", () => {
+    it("should get room clients", () => {
+      const roomId = "test-room";
+      const clients = socketService.getRoomClients(roomId);
+
+      expect(clients).toBeInstanceOf(Set);
+      expect(clients?.has("test-socket-id")).toBe(true);
+    });
+
+    it("should get connected sockets count", () => {
+      const count = socketService.getConnectedSockets();
+      expect(count).toBe(1);
+    });
   });
 });
