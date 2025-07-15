@@ -1,32 +1,33 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
-import nomineeService from "../../config/NomineeService";
+import NomineeService from "../../config/NomineeService";
 
 const mockRedisClient = {
   set: mock(async (key: string, value: any) => {}),
   get: mock(async (key: string) => "1"),
   incr: mock(async (key: string) => 1),
-  hset: mock(async (key: string, field: string, value: any) => {}),
+  hSet: mock(async (key: string, field: string, value: any) => {}),
   hGetAll: mock(async (key: string) => ({ "1": "John Doe" })),
   lPush: mock(async (key: string, value: any) => {}),
-  lRange: mock(async (key: string, start: number, stop: number) => [
+  lRange: mock(async (key:string, start: number, stop: number) => [
     JSON.stringify(["John Doe"]),
   ]),
 };
 
-mock.module("../../config/redisClient", () => ({
-  __esModule: true,
-  redisClient: mockRedisClient,
-}));
-
 describe("NomineeService", () => {
+  let nomineeService: NomineeService;
+
   beforeEach(() => {
+    // Reset mocks
     mockRedisClient.set.mockClear();
     mockRedisClient.get.mockClear();
     mockRedisClient.incr.mockClear();
-    mockRedisClient.hset.mockClear();
+    mockRedisClient.hSet.mockClear();
     mockRedisClient.hGetAll.mockClear();
     mockRedisClient.lPush.mockClear();
     mockRedisClient.lRange.mockClear();
+
+    // Create a new instance of the service with the mock client for each test
+    nomineeService = new NomineeService(mockRedisClient as any);
   });
 
   describe("setNomineeCount", () => {
@@ -52,6 +53,7 @@ describe("NomineeService", () => {
 
   describe("getNomineeCount", () => {
     it("should get nominee count successfully", async () => {
+      mockRedisClient.get.mockResolvedValueOnce("1");
       const [error, count, status] = await nomineeService.getNomineeCount(
         "room123",
       );
@@ -62,6 +64,17 @@ describe("NomineeService", () => {
       expect(mockRedisClient.get).toHaveBeenCalledWith(
         "room:room123:nominee_count",
       );
+    });
+
+    it("should return null if count does not exist", async () => {
+      mockRedisClient.get.mockResolvedValueOnce(null);
+      const [error, count, status] = await nomineeService.getNomineeCount(
+        "room123",
+      );
+
+      expect(error).toBeNull();
+      expect(count).toBeNull();
+      expect(status).toBe(200);
     });
 
     it("should return an error if redis fails", async () => {
@@ -78,6 +91,7 @@ describe("NomineeService", () => {
 
   describe("addNominee", () => {
     it("should add a nominee successfully", async () => {
+      mockRedisClient.incr.mockResolvedValueOnce(1);
       const [error, status] = await nomineeService.addNominee(
         "room123",
         "John Doe",
@@ -88,7 +102,7 @@ describe("NomineeService", () => {
       expect(mockRedisClient.incr).toHaveBeenCalledWith(
         "room:room123:nominee_count",
       );
-      expect(mockRedisClient.hset).toHaveBeenCalledWith(
+      expect(mockRedisClient.hSet).toHaveBeenCalledWith(
         "room:room123:nominees",
         1,
         "John Doe",
@@ -109,6 +123,7 @@ describe("NomineeService", () => {
 
   describe("getAllNominees", () => {
     it("should get all nominees successfully", async () => {
+      mockRedisClient.hGetAll.mockResolvedValueOnce({ "1": "John Doe" });
       const [error, nominees, status] = await nomineeService.getAllNominees(
         "room123",
       );
@@ -160,6 +175,9 @@ describe("NomineeService", () => {
 
   describe("getAllVotes", () => {
     it("should get all votes successfully", async () => {
+      mockRedisClient.lRange.mockResolvedValueOnce([
+        JSON.stringify(["John Doe"]),
+      ]);
       const [error, votes, status] = await nomineeService.getAllVotes("room123");
 
       expect(error).toBeNull();
@@ -170,6 +188,15 @@ describe("NomineeService", () => {
         0,
         -1,
       );
+    });
+
+    it("should return an empty array if no votes", async () => {
+      mockRedisClient.lRange.mockResolvedValueOnce([]);
+      const [error, votes, status] = await nomineeService.getAllVotes("room123");
+
+      expect(error).toBeNull();
+      expect(votes).toEqual([]);
+      expect(status).toBe(200);
     });
 
     it("should return an error if redis fails", async () => {
