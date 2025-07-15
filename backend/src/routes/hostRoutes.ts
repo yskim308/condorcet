@@ -1,14 +1,21 @@
 import express from "express";
-import roomService from "../config/RoomService";
-import nomineeService from "../config/NomineeService";
-import userRoomService from "../config/UserRoomService";
+import type RoomService from "../config/RoomService";
+import type NomineeService from "../config/NomineeService";
+import type UserRoomService from "../config/UserRoomService";
+import type { CreateVerifyHostMiddleware } from "../middleware/verifyHost";
 import { randomBytes } from "crypto";
-import { verifyHost } from "../middleware/verifyHost";
 import SocketService from "../config/SocketService";
 import type { RoomData, RoomState } from "../types/room";
 
-export const createHostRouter = (socketService: SocketService) => {
+export const createHostRouter = (
+  socketService: SocketService,
+  roomService: RoomService,
+  nomineeService: NomineeService,
+  userRoomService: UserRoomService,
+  createVerifyHostMiddleware: CreateVerifyHostMiddleware,
+) => {
   const router = express.Router();
+  const verifyHost = createVerifyHostMiddleware(roomService);
   interface createBody {
     roomName: string;
     userName: string;
