@@ -5,9 +5,7 @@ import userRoomService from "../config/UserRoomService";
 import { randomBytes } from "crypto";
 import { verifyHost } from "../middleware/verifyHost";
 import SocketService from "../config/SocketService";
-import type { RoomData } from "../types/room";
-
-type RoomState = "nominating" | "voting" | "done";
+import type { RoomData, RoomState } from "../types/room";
 
 export const createHostRouter = (socketService: SocketService) => {
   const router = express.Router();
