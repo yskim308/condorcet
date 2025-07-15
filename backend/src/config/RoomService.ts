@@ -1,14 +1,20 @@
-import { redisClient } from "./redisClient";
+import type { RedisClientType } from "redis";
 import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
-import type { RoomData } from "../routes/hostRoutes";
+import type { RoomData } from "../types/room";
 
 class RoomService {
+  private redisClient: RedisClientType;
+
+  constructor(redisClient: RedisClientType) {
+    this.redisClient = redisClient;
+  }
+
   async createRoom(
     roomId: string,
     roomData: RoomData,
   ): Promise<[Error | null, number]> {
     try {
-      await redisClient.hset(`room:${roomId}`, roomData);
+      await this.redisClient.hSet(`room:${roomId}`, { ...roomData });
       return [null, 200];
     } catch (error: unknown) {
       console.error("error creating room: " + getErrorMessage(error));
@@ -21,7 +27,7 @@ class RoomService {
     state: "nominating" | "voting" | "done",
   ): Promise<[Error | null, number]> {
     try {
-      await redisClient.hset(`room:${roomId}`, "state", state);
+      await this.redisClient.hSet(`room:${roomId}`, "state", state);
       return [null, 200];
     } catch (error: unknown) {
       console.error("error updating room state: " + getErrorMessage(error));
@@ -31,7 +37,7 @@ class RoomService {
 
   async getState(roomId: string): Promise<[Error | null, string, number]> {
     try {
-      const roomState = await redisClient.hget(`room:${roomId}`, "state");
+      const roomState = await this.redisClient.hGet(`room:${roomId}`, "state");
       if (roomState) {
         return [null, String(roomState), 200];
       } else {
@@ -46,7 +52,7 @@ class RoomService {
 
   async exists(roomId: string): Promise<[Error | null, boolean, number]> {
     try {
-      const roomExists = await redisClient.exists(`room:${roomId}`);
+      const roomExists = await this.redisClient.exists(`room:${roomId}`);
       return [null, roomExists === 1, 200];
     } catch (error: unknown) {
       console.error("error getting room state: " + getErrorMessage(error));
@@ -57,7 +63,7 @@ class RoomService {
 
   async getHostKey(roomId: string): Promise<[Error | null, string, number]> {
     try {
-      const hostKey = await redisClient.hget(`room:${roomId}`, "hostKey");
+      const hostKey = await this.redisClient.hGet(`room:${roomId}`, "hostKey");
       if (hostKey) {
         return [null, String(hostKey), 200];
       } else {
@@ -71,5 +77,4 @@ class RoomService {
   }
 }
 
-const roomService = new RoomService();
-export default roomService;
+export default RoomService;

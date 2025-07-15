@@ -5,15 +5,9 @@ import userRoomService from "../config/UserRoomService";
 import { randomBytes } from "crypto";
 import { verifyHost } from "../middleware/verifyHost";
 import SocketService from "../config/SocketService";
+import type { RoomData } from "../types/room";
 
 type RoomState = "nominating" | "voting" | "done";
-
-export interface RoomData {
-  name: string;
-  state: RoomState;
-  host: string;
-  hostKey: string;
-}
 
 export const createHostRouter = (socketService: SocketService) => {
   const router = express.Router();
@@ -150,11 +144,9 @@ export const createHostRouter = (socketService: SocketService) => {
 
         const [err, code] = await roomService.updateState(roomId, state);
         if (err) {
-          res
-            .status(code)
-            .json({
-              error: `redis failed to update room state: ${err.message}`,
-            });
+          res.status(code).json({
+            error: `redis failed to update room state: ${err.message}`,
+          });
           return;
         }
 
@@ -175,4 +167,3 @@ export const createHostRouter = (socketService: SocketService) => {
 
   return router;
 };
-
