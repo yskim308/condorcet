@@ -96,6 +96,24 @@ class UserRoomService {
     }
   }
 
+  async getVotedUsers(
+    roomId: string,
+  ): Promise<[Error | null, string[], number]> {
+    try {
+      const votedUsers = await this.redisClient.sMembers(
+        `room:${roomId}:voted`,
+      );
+      if (!votedUsers) {
+        return [null, [], 200];
+      } else {
+        return [null, votedUsers, 200];
+      }
+    } catch (error: unknown) {
+      const [err, code] = getRedisError(error);
+      return [err, [], code];
+    }
+  }
+
   async checkUserVoted(
     roomId: string,
     userName: string,
