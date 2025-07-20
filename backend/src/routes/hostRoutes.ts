@@ -6,6 +6,7 @@ import type { CreateVerifyHostMiddleware } from "../middleware/verifyHost";
 import { randomBytes } from "crypto";
 import type SocketService from "../config/SocketService";
 import type { RoomData, RoomState } from "../types/room";
+import findWinner from "../util/findWinner";
 
 export const createHostRouter = (
   socketService: SocketService,
@@ -91,7 +92,6 @@ export const createHostRouter = (
 
   interface nominationBody {
     nominee: string;
-    hostkey: string;
   }
   router.post(
     "/rooms/:roomId/nomination",
@@ -129,9 +129,6 @@ export const createHostRouter = (
     },
   );
 
-  interface setVotingBody {
-    hostkey: string;
-  }
   router.post(
     "rooms/:roomId/setVoting",
     verifyHost,
@@ -156,15 +153,43 @@ export const createHostRouter = (
     },
   );
 
-  interface setDoneBody {
-    hostkey: string;
-  }
   router.post(
     "rooms/:roomId/setDone",
     verifyHost,
     async (req: express.Request, res: express.Response) => {
       try {
         const { roomId } = req.params;
+        const [voteErr, votes, voteCode] =
+          await nomineeService.getAllVotes(roomId);
+        if (voteErr) {
+          res.status(voteCode).json({
+            error: `cannot get all votes from redis: ${voteErr?.message}`,
+          });
+          return;
+        }
+        if (!votes) {
+          res.status(401).json({
+            error: "no votes have been cast",
+          });
+          return;
+        }
+
+        const [countErr, count, countCode] =
+          await nomineeService.getNomineeCount(roomId);
+        if (countErr) {
+          res
+            .status(countCode)
+            .json({ error: `cannot get nominee count: ${countErr.message}` });
+          return;
+        }
+        if (!count) {
+          res.status(401).json({
+            error: "nominee count is... null?",
+          });
+          return;
+        }
+
+        const winningIdx = findWinner(votes, count);
 
         const [err, code] = await roomService.setVoting(roomId);
         if (err) {
