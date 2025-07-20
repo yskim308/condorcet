@@ -128,47 +128,5 @@ export const createHostRouter = (
     },
   );
 
-  interface StateBody {
-    state: RoomState;
-  }
-  router.post(
-    "/rooms/:roomId/state",
-    verifyHost,
-    async (req: express.Request, res: express.Response) => {
-      try {
-        const { roomId } = req.params;
-        const { state }: StateBody = req.body;
-
-        if (!state || !["nominating", "voting", "done"].includes(state)) {
-          res.status(400).json({
-            error:
-              "state is required and must be 'nominating', 'voting', or 'done'",
-          });
-          return;
-        }
-
-        const [err, code] = await roomService.updateState(roomId, state);
-        if (err) {
-          res.status(code).json({
-            error: `redis failed to update room state: ${err.message}`,
-          });
-          return;
-        }
-
-        socketService.emitStateChange(roomId, state);
-
-        res.status(200).json({
-          message: "Room state updated successfully",
-          state,
-        });
-        return;
-      } catch (error) {
-        console.error("Error updating room state:", error);
-        res.status(500).json({ error: "Failed to update room state" });
-        return;
-      }
-    },
-  );
-
   return router;
 };
