@@ -155,4 +155,22 @@ export default class NomineeService {
       return [err, "", code];
     }
   }
+
+  async getWinner(roomId: string): Promise<[Error | null, string, number]> {
+    try {
+      const winner = await this.redisClient.hGet(
+        `room:${roomId}`,
+        "winnerName",
+      );
+      if (!winner) {
+        return [new Error("no winner was set"), "", 401];
+      } else {
+        return [null, winner, 200];
+      }
+    } catch (error: unknown) {
+      console.error("error when getting winner: " + getErrorMessage(error));
+      const [err, code] = getRedisError(error);
+      return [err, "", code];
+    }
+  }
 }
