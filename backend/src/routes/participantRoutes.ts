@@ -41,20 +41,6 @@ export const createParticipantRouter = (
           return;
         }
 
-        // check if the state of the room is 'nominating'
-        const [stateErr, roomState, codeState] =
-          await roomService.getState(roomId);
-        if (stateErr) {
-          res
-            .status(codeState)
-            .json({ error: `Failed to get room state: ${stateErr.message}` });
-          return;
-        }
-        if (roomState !== "nominating") {
-          res.status(403).json({ error: "Room is not in a joinable state" });
-          return;
-        }
-
         // 'join' the user to the room
         const [enrollErr, codeEnroll] = await userRoomService.enrollUser(
           roomId,
