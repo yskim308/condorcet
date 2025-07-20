@@ -7,6 +7,7 @@ import { randomBytes } from "crypto";
 import type SocketService from "../config/SocketService";
 import type { RoomData, RoomState } from "../types/room";
 import findWinner from "../util/findWinner";
+import type { NomineeMap } from "../types/nominee";
 
 export const createHostRouter = (
   socketService: SocketService,
@@ -190,6 +191,21 @@ export const createHostRouter = (
         }
 
         const winningIdx = findWinner(votes, count);
+        const [nomineeErr, nomineeMap, nomineeCode] =
+          await nomineeService.getAllNominees(roomId);
+        if (nomineeErr) {
+          res.status(nomineeCode).json({
+            error: `error getting the mapping of nominees to id: ${nomineeErr.message}`,
+          });
+          return;
+        }
+        if (!nomineeMap) {
+          res.status(401).json({
+            error: "nominee map is null",
+          });
+          return;
+        }
+        const winner: string = nomineeMap[winningIdx];
 
         const [err, code] = await roomService.setVoting(roomId);
         if (err) {
@@ -198,6 +214,11 @@ export const createHostRouter = (
             .json({ error: `couldn't set room to voting: ${err.message}` });
           return;
         }
+
+        res.status(200).json({
+          message: "winner succesfully chosen",
+          winner: winner,
+        });
       } catch (error) {
         console.error("error setting room to ");
         res.status(500).json({ error: "Failed to set state to voting" });
