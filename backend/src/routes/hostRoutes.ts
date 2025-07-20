@@ -4,7 +4,7 @@ import type NomineeService from "../config/NomineeService";
 import type UserRoomService from "../config/UserRoomService";
 import type { CreateVerifyHostMiddleware } from "../middleware/verifyHost";
 import { randomBytes } from "crypto";
-import SocketService from "../config/SocketService";
+import type SocketService from "../config/SocketService";
 import type { RoomData, RoomState } from "../types/room";
 
 export const createHostRouter = (
@@ -129,5 +129,56 @@ export const createHostRouter = (
     },
   );
 
+  interface setVotingBody {
+    hostkey: string;
+  }
+  router.post(
+    "rooms/:roomId/setVoting",
+    verifyHost,
+    async (req: express.Request, res: express.Response) => {
+      try {
+        const { roomId } = req.params;
+        const [err, code] = await roomService.setVoting(roomId);
+        if (err) {
+          res
+            .status(code)
+            .json({ error: `couldn't set state to voting: ${err.message}` });
+          return;
+        }
+        res.status(200).json({
+          message: "room set to voting succesfully",
+        });
+      } catch (error) {
+        console.error("error setting room to ");
+        res.status(500).json({ error: "Failed to set state to voting" });
+        return;
+      }
+    },
+  );
+
+  interface setDoneBody {
+    hostkey: string;
+  }
+  router.post(
+    "rooms/:roomId/setDone",
+    verifyHost,
+    async (req: express.Request, res: express.Response) => {
+      try {
+        const { roomId } = req.params;
+
+        const [err, code] = await roomService.setVoting(roomId);
+        if (err) {
+          res
+            .status(code)
+            .json({ error: `couldn't set room to voting: ${err.message}` });
+          return;
+        }
+      } catch (error) {
+        console.error("error setting room to ");
+        res.status(500).json({ error: "Failed to set state to voting" });
+        return;
+      }
+    },
+  );
   return router;
 };
