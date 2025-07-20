@@ -160,52 +160,13 @@ export const createHostRouter = (
     async (req: express.Request, res: express.Response) => {
       try {
         const { roomId } = req.params;
-        const [voteErr, votes, voteCode] =
-          await nomineeService.getAllVotes(roomId);
-        if (voteErr) {
-          res.status(voteCode).json({
-            error: `cannot get all votes from redis: ${voteErr?.message}`,
+        const [winErr, winner, winCode] =
+          await nomineeService.findWinner(roomId);
+        if (winErr) {
+          res.status(winCode).json({
+            error: `error finding winner: ${winErr.message}`,
           });
-          return;
         }
-        if (!votes) {
-          res.status(401).json({
-            error: "no votes have been cast",
-          });
-          return;
-        }
-
-        const [countErr, count, countCode] =
-          await nomineeService.getNomineeCount(roomId);
-        if (countErr) {
-          res
-            .status(countCode)
-            .json({ error: `cannot get nominee count: ${countErr.message}` });
-          return;
-        }
-        if (!count) {
-          res.status(401).json({
-            error: "nominee count is... null?",
-          });
-          return;
-        }
-
-        const winningIdx = findWinner(votes, count);
-        const [nomineeErr, nomineeMap, nomineeCode] =
-          await nomineeService.getAllNominees(roomId);
-        if (nomineeErr) {
-          res.status(nomineeCode).json({
-            error: `error getting the mapping of nominees to id: ${nomineeErr.message}`,
-          });
-          return;
-        }
-        if (!nomineeMap) {
-          res.status(401).json({
-            error: "nominee map is null",
-          });
-          return;
-        }
-        const winner: string = nomineeMap[winningIdx];
 
         const [err, code] = await roomService.setVoting(roomId);
         if (err) {
