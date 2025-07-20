@@ -117,6 +117,7 @@ export default class NomineeService {
 
   async findWinner(roomId: string): Promise<[Error | null, string, number]> {
     try {
+      // get votes
       const [voteErr, votes, voteCode] = await this.getAllVotes(roomId);
       if (voteErr) {
         return [voteErr, "", voteCode];
@@ -124,14 +125,20 @@ export default class NomineeService {
       if (!votes) {
         return [new Error("no votes recorded"), "", 500];
       }
+
+      // get nominee count
       const nomineeCount = await this.redisClient.get(
         `room:${roomId}:nominee_count`,
       );
       if (!nomineeCount) {
         return [new Error("nominee count not initialized"), "", 500];
       }
-      const winnerId = findWinner(votes, parseInt(nomineeCount));
 
+      // find winner with util, then set in redis
+      const winnerId = findWinner(votes, parseInt(nomineeCount));
+      await this.redisClient.hSet(`room:${roomId}`, "winnerId", winnerId);
+
+      // get the nominee map to find winner string
       const nomineeMap = await this.redisClient.hGetAll(
         `room:${roomId}:nominees`,
       );
@@ -139,6 +146,7 @@ export default class NomineeService {
       if (!winner) {
         return [new Error("winner Id not defined in map"), "", 500];
       }
+
       return [null, winner, 200];
     } catch (error: unknown) {
       console.error("error when determinig winner: " + getErrorMessage(error));
