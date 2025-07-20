@@ -41,18 +41,6 @@ class RoomService {
       return getRedisError(error);
     }
   }
-  async updateState(
-    roomId: string,
-    state: "nominating" | "voting" | "done",
-  ): Promise<[Error | null, number]> {
-    try {
-      await this.redisClient.hSet(`room:${roomId}`, "state", state);
-      return [null, 200];
-    } catch (error: unknown) {
-      console.error("error updating room state: " + getErrorMessage(error));
-      return getRedisError(error);
-    }
-  }
 
   async getState(roomId: string): Promise<[Error | null, string, number]> {
     try {
