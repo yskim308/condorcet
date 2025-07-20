@@ -67,6 +67,130 @@ export const createParticipantRouter = (
     },
   );
 
+  interface GetRoomDataBody {
+    userName: string;
+  }
+  router.post(
+    "/room/:roomId/getRoomData",
+    async (req: express.Request, res: express.Response) => {
+      try {
+        const { roomId } = req.params;
+        const { userName } = req.body;
+        // check if the room exists
+        const [existErr, exists, existCode] = await roomService.exists(roomId);
+        if (existErr) {
+          res.status(existCode).json({
+            error: `error when checking if room exists: ${existErr.message}`,
+          });
+          return;
+        }
+        if (!exists) {
+          res.status(401).json({
+            error: "room does not exist",
+          });
+          return;
+        }
+
+        // get the role
+        const [roleErr, role, roleCode] = await userRoomService.getRole(
+          roomId,
+          userName,
+        );
+        if (roleErr) {
+          res.status(roleCode).json({
+            error: `Error while getting role of user ${userName}: ${roleErr.message}`,
+          });
+          return;
+        }
+
+        // get users
+        const [userErr, users, userCode] =
+          await userRoomService.getUsers(roomId);
+        if (userErr) {
+          res.status(userCode).json({
+            error: `error whiel getting users in room: ${userErr.message}`,
+          });
+          return;
+        }
+
+        // get the state
+        const [stateErr, state, stateCode] = await roomService.getState(roomId);
+        if (stateErr) {
+          res.status(stateCode).json({
+            error: `error while getting state of room ${roomId}: ${stateErr?.message}`,
+          });
+          return;
+        }
+        if (!state) {
+          res.status(500).json({
+            error: "state is null",
+          });
+          return;
+        }
+
+        // get nominations
+        const [nominationErr, nominations, nominationCode] =
+          await nomineeService.getAllNominees(roomId);
+        if (nominationErr) {
+          res.status(nominationCode).json({
+            error: `error while getting nominations in room: ${nominationErr.message}`,
+          });
+          return;
+        }
+        if (!nominations) {
+          res.status(500).json({
+            error: "nominations are null",
+          });
+          return;
+        }
+
+        let votedUsersResponse: string[] | undefined;
+        let winnerResponse: string | undefined;
+
+        if (state === "voting") {
+          const [votedErr, votedUsers, votedCode] =
+            await userRoomService.getVotedUsers(roomId);
+          if (votedErr) {
+            res.status(votedCode).json({
+              error: `Error while getting voted users: ${votedErr.message}`,
+            });
+            return;
+          }
+          votedUsersResponse = votedUsers;
+        }
+
+        if (state === "done") {
+          const [winnerErr, winner, winnerCode] =
+            await nomineeService.getWinner(roomId);
+          if (winnerErr) {
+            res.status(winnerCode).json({
+              error: `Error while getting the winner: ${winnerErr.message}`,
+            });
+            return;
+          }
+          winnerResponse = winner;
+        }
+
+        const responseData: any = {
+          role,
+          users,
+          state,
+          nominations,
+        };
+
+        if (votedUsersResponse) {
+          responseData.votedUsers = votedUsersResponse;
+        }
+
+        if (winnerResponse) {
+          responseData.winner = winnerResponse;
+        }
+
+        res.status(200).json(responseData);
+      } catch (error: unknown) {}
+    },
+  );
+
   interface VoteBody {
     vote: string[];
     userName: string;
