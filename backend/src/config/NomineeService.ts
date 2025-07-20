@@ -1,5 +1,6 @@
 import type { RedisClientType } from "redis";
 import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
+import type { NomineeMap } from "../types/nominee";
 
 export default class NomineeService {
   private redisClient: RedisClientType;
@@ -55,10 +56,10 @@ export default class NomineeService {
 
   async getAllNominees(
     roomId: string,
-  ): Promise<[Error | null, Record<string, string> | null, number]> {
+  ): Promise<[Error | null, NomineeMap | null, number]> {
     try {
       // HGETALL returns an object where keys are fields and values are their corresponding values.
-      const nominees = await this.redisClient.hGetAll(
+      const nominees: NomineeMap = await this.redisClient.hGetAll(
         `room:${roomId}:nominees`,
       );
 
