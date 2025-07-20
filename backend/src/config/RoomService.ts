@@ -22,6 +22,15 @@ class RoomService {
     }
   }
 
+  async setVoting(roomId: string): Promise<[Error | null, number]> {
+    try {
+      await this.redisClient.hSet(`room:${roomId}`, "state", "voting");
+      return [null, 200];
+    } catch (error: unknown) {
+      console.error("error setting state to voting: " + getErrorMessage(error));
+      return getRedisError(error);
+    }
+  }
   async updateState(
     roomId: string,
     state: "nominating" | "voting" | "done",
