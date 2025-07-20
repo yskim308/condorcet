@@ -136,7 +136,6 @@ export default class NomineeService {
 
       // find winner with util, then set in redis
       const winnerId = findWinner(votes, parseInt(nomineeCount));
-      await this.redisClient.hSet(`room:${roomId}`, "winnerId", winnerId);
 
       // get the nominee map to find winner string
       const nomineeMap = await this.redisClient.hGetAll(
@@ -147,6 +146,8 @@ export default class NomineeService {
         return [new Error("winner Id not defined in map"), "", 500];
       }
 
+      await this.redisClient.hSet(`room:${roomId}`, "winnerId", winnerId);
+      await this.redisClient.hSet(`room:${roomId}`, "winnerName", winner);
       return [null, winner, 200];
     } catch (error: unknown) {
       console.error("error when determinig winner: " + getErrorMessage(error));
