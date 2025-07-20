@@ -91,6 +91,7 @@ export const createHostRouter = (
 
   interface nominationBody {
     nominee: string;
+    hostkey: string;
   }
   router.post(
     "/rooms/:roomId/nomination",
