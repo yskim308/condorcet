@@ -60,6 +60,23 @@ class UserRoomService {
     }
   }
 
+  async getRole(
+    roomId: string,
+    userName: string,
+  ): Promise<[Error | null, string, number]> {
+    try {
+      const roomHost = await this.redisClient.hGet(`room:${roomId}`, "host");
+      if (userName === roomHost) {
+        return [null, "host", 200];
+      } else {
+        return [null, "user", 200];
+      }
+    } catch (error: unknown) {
+      const [err, code] = getRedisError(error);
+      return [err, "", code];
+    }
+  }
+
   async setUserVoted(
     roomId: string,
     userName: string,
