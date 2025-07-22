@@ -75,7 +75,7 @@ export const createParticipantRouter = (
     async (req: express.Request, res: express.Response) => {
       try {
         const { roomId } = req.params;
-        const { userName } = req.body;
+        const { userName }: GetRoomDataBody = req.body;
         // check if the room exists
         const [existErr, exists, existCode] = await roomService.exists(roomId);
         if (existErr) {
