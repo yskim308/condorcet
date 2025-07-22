@@ -143,6 +143,7 @@ export const createHostRouter = (
             .json({ error: `couldn't set state to voting: ${err.message}` });
           return;
         }
+        socketService.emitStateChange(roomId, "voting");
         res.status(200).json({
           message: "room set to voting succesfully",
         });
@@ -176,6 +177,8 @@ export const createHostRouter = (
           return;
         }
 
+        socketService.emitStateChange(roomId, "done");
+        socketService.emitWinner(roomId, winner);
         res.status(200).json({
           message: "winner succesfully chosen",
           winner: winner,
