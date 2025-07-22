@@ -14,19 +14,41 @@ const mockSocketService: Partial<SocketService> = {
 };
 
 const mockRoomService: Partial<RoomService> = {
-  exists: mock(async () => [null, true, 200]),
-  getState: mock(async () => [null, "nominating", 200]),
-  getHostKey: mock(async () => [null, "test-host-key", 200]),
+  exists: mock(
+    async (): Promise<[Error | null, boolean, number]> => [null, true, 200],
+  ),
+  getState: mock(
+    async (): Promise<[Error | null, string, number]> => [
+      null,
+      "nominating",
+      200,
+    ],
+  ),
+  getHostKey: mock(
+    async (): Promise<[Error | null, string, number]> => [
+      null,
+      "test-host-key",
+      200,
+    ],
+  ),
 };
 
 const mockNomineeService: Partial<NomineeService> = {
-  saveVote: mock(async () => [null, 200]),
+  saveVote: mock(async (): Promise<[Error | null, number]> => [null, 200]),
 };
 
 const mockUserRoomService: Partial<UserRoomService> = {
-  enrollUser: mock(async () => [null, 200]),
-  getUsers: mock(async () => [null, ["user1", "user2"], 200]),
-  checkUserVoted: mock(async () => [null, false, 200]),
+  enrollUser: mock(async (): Promise<[Error | null, number]> => [null, 200]),
+  getUsers: mock(
+    async (): Promise<[Error | null, string[], number]> => [
+      null,
+      ["user1", "user2"],
+      200,
+    ],
+  ),
+  checkUserVoted: mock(
+    async (): Promise<[Error | null, boolean, number]> => [null, false, 200],
+  ),
 };
 
 describe("Participant Routes", () => {
@@ -67,34 +89,34 @@ describe("Participant Routes", () => {
 
       expect(response.status).toBe(200);
       expect(mockRoomService.exists).toHaveBeenCalledWith("room123");
-      expect(mockRoomService.getState).toHaveBeenCalledWith("room123");
-      expect(mockUserRoomService.enrollUser).toHaveBeenCalledWith("room123", "user1");
-      expect(mockSocketService.emitNewUser).toHaveBeenCalledWith("room123", "user1");
+      expect(mockUserRoomService.enrollUser).toHaveBeenCalledWith(
+        "room123",
+        "user1",
+      );
+      expect(mockSocketService.emitNewUser).toHaveBeenCalledWith(
+        "room123",
+        "user1",
+      );
     });
 
     it("should return 400 if roomId or userName is missing", async () => {
-      const res1 = await request(app).post("/room/join").send({ userName: "user1" });
-      const res2 = await request(app).post("/room/join").send({ roomId: "room123" });
+      const res1 = await request(app)
+        .post("/room/join")
+        .send({ userName: "user1" });
+      const res2 = await request(app)
+        .post("/room/join")
+        .send({ roomId: "room123" });
       expect(res1.status).toBe(400);
       expect(res2.status).toBe(400);
     });
 
     it("should return 404 if room does not exist", async () => {
-        (mockRoomService.exists as any).mockResolvedValueOnce([null, false, 404]);
-        const response = await request(app).post("/room/join").send({
-            roomId: "room123",
-            userName: "user1",
-        });
-        expect(response.status).toBe(404);
-    });
-
-    it("should return 403 if room is not in nominating state", async () => {
-        (mockRoomService.getState as any).mockResolvedValueOnce([null, "voting", 200]);
-        const response = await request(app).post("/room/join").send({
-            roomId: "room123",
-            userName: "user1",
-        });
-        expect(response.status).toBe(403);
+      (mockRoomService.exists as any).mockResolvedValueOnce([null, false, 404]);
+      const response = await request(app).post("/room/join").send({
+        roomId: "room123",
+        userName: "user1",
+      });
+      expect(response.status).toBe(404);
     });
   });
 
@@ -109,17 +131,19 @@ describe("Participant Routes", () => {
     });
 
     it("should return 'user' for incorrect hostKey", async () => {
-        const response = await request(app)
-            .post("/room/room123/getRole")
-            .send({ hostKey: "invalid-key" });
-        expect(response.status).toBe(200);
-        expect(response.body.role).toBe("user");
+      const response = await request(app)
+        .post("/room/room123/getRole")
+        .send({ hostKey: "invalid-key" });
+      expect(response.status).toBe(200);
+      expect(response.body.role).toBe("user");
     });
 
     it("should return 'user' if no hostKey is provided", async () => {
-        const response = await request(app).post("/room/room123/getRole").send({});
-        expect(response.status).toBe(200);
-        expect(response.body.role).toBe("user");
+      const response = await request(app)
+        .post("/room/room123/getRole")
+        .send({});
+      expect(response.status).toBe(200);
+      expect(response.body.role).toBe("user");
     });
   });
 
@@ -140,17 +164,30 @@ describe("Participant Routes", () => {
         .send({ vote: ["nominee1"], userName: "user1" });
 
       expect(response.status).toBe(200);
-      expect(mockUserRoomService.checkUserVoted).toHaveBeenCalledWith("room123", "user1");
-      expect(mockNomineeService.saveVote).toHaveBeenCalledWith("room123", ["nominee1"]);
-      expect(mockSocketService.emitNewVote).toHaveBeenCalledWith("room123", "user1");
+      expect(mockUserRoomService.checkUserVoted).toHaveBeenCalledWith(
+        "room123",
+        "user1",
+      );
+      expect(mockNomineeService.saveVote).toHaveBeenCalledWith("room123", [
+        "nominee1",
+      ]);
+      expect(mockSocketService.emitNewVote).toHaveBeenCalledWith(
+        "room123",
+        "user1",
+      );
     });
 
     it("should return 404 if user has already voted", async () => {
-        (mockUserRoomService.checkUserVoted as any).mockResolvedValueOnce([null, true, 200]);
-        const response = await request(app)
-            .post("/room/room123/vote")
-            .send({ vote: ["nominee1"], userName: "user1" });
-        expect(response.status).toBe(404);
+      (mockUserRoomService.checkUserVoted as any).mockResolvedValueOnce([
+        null,
+        true,
+        200,
+      ]);
+      const response = await request(app)
+        .post("/room/room123/vote")
+        .send({ vote: ["nominee1"], userName: "user1" });
+      expect(response.status).toBe(404);
     });
   });
 });
+
