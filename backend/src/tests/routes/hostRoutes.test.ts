@@ -15,21 +15,22 @@ const mockSocketService: Partial<SocketService> = {
 };
 
 const mockRoomService: Partial<RoomService> = {
-  createRoom: mock(async () => [null, 201]),
-  updateState: mock(async () => [null, 200]),
-  getHostKey: mock(async () => [null, "test-host-key", 200]),
+  createRoom: mock(async () => [null, 201] as any),
+  getHostKey: mock(async () => [null, "test-host-key", 200] as any),
 };
 
 const mockNomineeService: Partial<NomineeService> = {
-  setNomineeCount: mock(async () => [null, 200]),
-  addNominee: mock(async () => [null, 200]),
+  setNomineeCount: mock(async () => [null, 200] as any),
+  addNominee: mock(async () => [null, 200] as any),
 };
 
 const mockUserRoomService: Partial<UserRoomService> = {
-  enrollUser: mock(async () => [null, 200]),
+  enrollUser: mock(async () => [null, 200] as any),
 };
 
-const createMockVerifyHostMiddleware: CreateVerifyHostMiddleware = (roomService) => {
+const createMockVerifyHostMiddleware: CreateVerifyHostMiddleware = (
+  roomService,
+) => {
   return async (req, res, next) => {
     const { hostKey } = req.body;
     if (!hostKey) {
@@ -90,19 +91,26 @@ describe("Host Routes", () => {
     });
 
     it("should return 400 if roomName or userName is missing", async () => {
-      const res1 = await request(app).post("/rooms/create").send({ userName: "user123" });
-      const res2 = await request(app).post("/rooms/create").send({ roomName: "Test Room" });
+      const res1 = await request(app)
+        .post("/rooms/create")
+        .send({ userName: "user123" });
+      const res2 = await request(app)
+        .post("/rooms/create")
+        .send({ roomName: "Test Room" });
       expect(res1.status).toBe(400);
       expect(res2.status).toBe(400);
     });
 
     it("should handle service errors gracefully", async () => {
-        (mockRoomService.createRoom as any).mockResolvedValueOnce([new Error("Redis error"), 500]);
-        const response = await request(app).post("/rooms/create").send({
-            roomName: "Test Room",
-            userName: "user123",
-        });
-        expect(response.status).toBe(500);
+      (mockRoomService.createRoom as any).mockResolvedValueOnce([
+        new Error("Redis error"),
+        500,
+      ]);
+      const response = await request(app).post("/rooms/create").send({
+        roomName: "Test Room",
+        userName: "user123",
+      });
+      expect(response.status).toBe(500);
     });
   });
 
@@ -113,22 +121,28 @@ describe("Host Routes", () => {
         .send({ nominee: "John Doe", hostKey: "test-host-key" });
 
       expect(response.status).toBe(200);
-      expect(mockNomineeService.addNominee).toHaveBeenCalledWith("room123", "John Doe");
-      expect(mockSocketService.emitNewNomination).toHaveBeenCalledWith("room123", "John Doe");
+      expect(mockNomineeService.addNominee).toHaveBeenCalledWith(
+        "room123",
+        "John Doe",
+      );
+      expect(mockSocketService.emitNewNomination).toHaveBeenCalledWith(
+        "room123",
+        "John Doe",
+      );
     });
 
     it("should return 400 if nominee is missing", async () => {
-        const response = await request(app)
-            .post("/rooms/room123/nomination")
-            .send({ hostKey: "test-host-key" });
-        expect(response.status).toBe(400);
+      const response = await request(app)
+        .post("/rooms/room123/nomination")
+        .send({ hostKey: "test-host-key" });
+      expect(response.status).toBe(400);
     });
 
     it("should return 401 for missing host key", async () => {
-        const response = await request(app)
-            .post("/rooms/room123/nomination")
-            .send({ nominee: "John Doe" });
-        expect(response.status).toBe(401);
+      const response = await request(app)
+        .post("/rooms/room123/nomination")
+        .send({ nominee: "John Doe" });
+      expect(response.status).toBe(401);
     });
 
     it("should return 403 for invalid host key", async () => {
@@ -139,11 +153,14 @@ describe("Host Routes", () => {
     });
 
     it("should handle service errors gracefully", async () => {
-        (mockNomineeService.addNominee as any).mockResolvedValueOnce([new Error("Redis error"), 500]);
-        const response = await request(app)
-            .post("/rooms/room123/nomination")
-            .send({ nominee: "John Doe", hostKey: "test-host-key" });
-        expect(response.status).toBe(500);
+      (mockNomineeService.addNominee as any).mockResolvedValueOnce([
+        new Error("Redis error"),
+        500,
+      ]);
+      const response = await request(app)
+        .post("/rooms/room123/nomination")
+        .send({ nominee: "John Doe", hostKey: "test-host-key" });
+      expect(response.status).toBe(500);
     });
   });
 
@@ -154,8 +171,14 @@ describe("Host Routes", () => {
         .send({ state: "voting", hostKey: "test-host-key" });
 
       expect(response.status).toBe(200);
-      expect(mockRoomService.updateState).toHaveBeenCalledWith("room123", "voting");
-      expect(mockSocketService.emitStateChange).toHaveBeenCalledWith("room123", "voting");
+      expect(mockRoomService.updateState).toHaveBeenCalledWith(
+        "room123",
+        "voting",
+      );
+      expect(mockSocketService.emitStateChange).toHaveBeenCalledWith(
+        "room123",
+        "voting",
+      );
     });
 
     it("should return 400 for invalid state", async () => {
@@ -166,11 +189,15 @@ describe("Host Routes", () => {
     });
 
     it("should handle service errors gracefully", async () => {
-        (mockRoomService.updateState as any).mockResolvedValueOnce([new Error("Redis error"), 500]);
-        const response = await request(app)
-            .post("/rooms/room123/state")
-            .send({ state: "voting", hostKey: "test-host-key" });
-        expect(response.status).toBe(500);
+      (mockRoomService.updateState as any).mockResolvedValueOnce([
+        new Error("Redis error"),
+        500,
+      ]);
+      const response = await request(app)
+        .post("/rooms/room123/state")
+        .send({ state: "voting", hostKey: "test-host-key" });
+      expect(response.status).toBe(500);
     });
   });
 });
+
