@@ -42,6 +42,10 @@ export default class SocketService {
     this.io.to(roomId).emit("user-voted", { userName });
   }
 
+  emitWinner(roomId: string, winner: string) {
+    this.io.to(roomId).emit("winner", winner);
+  }
+
   // Utility methods
   getRoomClients(roomId: string) {
     return this.io.sockets.adapter.rooms.get(roomId);
