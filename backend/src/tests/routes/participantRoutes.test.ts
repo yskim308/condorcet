@@ -35,6 +35,16 @@ const mockRoomService: Partial<RoomService> = {
 
 const mockNomineeService: Partial<NomineeService> = {
   saveVote: mock(async (): Promise<[Error | null, number]> => [null, 200]),
+  getAllNominees: mock(
+    async (): Promise<[Error | null, string[], number]> => [
+      null,
+      ["nominee1", "nominee2"],
+      200,
+    ],
+  ),
+  getWinner: mock(
+    async (): Promise<[Error | null, string, number]> => [null, "nominee1", 200],
+  ),
 };
 
 const mockUserRoomService: Partial<UserRoomService> = {
@@ -48,6 +58,20 @@ const mockUserRoomService: Partial<UserRoomService> = {
   ),
   checkUserVoted: mock(
     async (): Promise<[Error | null, boolean, number]> => [null, false, 200],
+  ),
+  getRole: mock(
+    async (): Promise<[Error | null, string, number]> => [
+      null,
+      "participant",
+      200,
+    ],
+  ),
+  getVotedUsers: mock(
+    async (): Promise<[Error | null, string[], number]> => [
+      null,
+      ["user1"],
+      200,
+    ],
   ),
 };
 
@@ -150,6 +174,89 @@ describe("Participant Routes", () => {
         .post("/room/room123/vote")
         .send({ vote: ["nominee1"], userName: "user1" });
       expect(response.status).toBe(404);
+    });
+  });
+
+  describe("POST /room/:roomId/getRoomData", () => {
+    it("should return all room data successfully", async () => {
+      // Mocks
+      (mockRoomService.exists as any).mockResolvedValueOnce([null, true, 200]);
+      (mockUserRoomService.getRole as any).mockResolvedValueOnce([
+        null,
+        "participant",
+        200,
+      ]);
+      (mockUserRoomService.getUsers as any).mockResolvedValueOnce([
+        null,
+        ["user1", "user2"],
+        200,
+      ]);
+      (mockRoomService.getState as any).mockResolvedValueOnce([
+        null,
+        "nominating",
+        200,
+      ]);
+      (mockNomineeService.getAllNominees as any).mockResolvedValueOnce([
+        null,
+        ["nominee1", "nominee2"],
+        200,
+      ]);
+
+      const response = await request(app)
+        .post("/room/room123/getRoomData")
+        .send({ userName: "user1" });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        role: "participant",
+        users: ["user1", "user2"],
+        state: "nominating",
+        nominations: ["nominee1", "nominee2"],
+      });
+    });
+
+    it("should return an error if the room does not exist", async () => {
+      (mockRoomService.exists as any).mockResolvedValueOnce([null, false, 404]);
+      const response = await request(app)
+        .post("/room/room123/getRoomData")
+        .send({ userName: "user1" });
+      expect(response.status).toBe(401);
+    });
+
+    it("should return voted users if state is 'voting'", async () => {
+      (mockRoomService.getState as any).mockResolvedValueOnce([
+        null,
+        "voting",
+        200,
+      ]);
+      (mockUserRoomService.getVotedUsers as any).mockResolvedValueOnce([
+        null,
+        ["user1"],
+        200,
+      ]);
+      const response = await request(app)
+        .post("/room/room123/getRoomData")
+        .send({ userName: "user1" });
+      expect(response.status).toBe(200);
+      expect(response.body.votedUsers).toEqual(["user1"]);
+    });
+
+    it("should return winner if state is 'done'", async () => {
+      (mockRoomService.getState as any).mockResolvedValueOnce([
+        null,
+        "done",
+        200,
+      ]);
+      (mockNomineeService.getWinner as any).mockResolvedValueOnce([
+        null,
+        "nominee1",
+        200,
+      ]);
+      const response = await request(app)
+        .post("/room/room123/getRoomData")
+        .send({ userName: "user1" });
+      expect(response.status).toBe(200);
+      expect(response.body.winner).toBe("nominee1");
     });
   });
 });
