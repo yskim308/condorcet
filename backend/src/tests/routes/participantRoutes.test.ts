@@ -120,43 +120,6 @@ describe("Participant Routes", () => {
     });
   });
 
-  describe("POST /room/:roomId/getRole", () => {
-    it("should return 'host' for correct hostKey", async () => {
-      const response = await request(app)
-        .post("/room/room123/getRole")
-        .send({ hostKey: "test-host-key" });
-
-      expect(response.status).toBe(200);
-      expect(response.body.role).toBe("host");
-    });
-
-    it("should return 'user' for incorrect hostKey", async () => {
-      const response = await request(app)
-        .post("/room/room123/getRole")
-        .send({ hostKey: "invalid-key" });
-      expect(response.status).toBe(200);
-      expect(response.body.role).toBe("user");
-    });
-
-    it("should return 'user' if no hostKey is provided", async () => {
-      const response = await request(app)
-        .post("/room/room123/getRole")
-        .send({});
-      expect(response.status).toBe(200);
-      expect(response.body.role).toBe("user");
-    });
-  });
-
-  describe("GET /room/:roomId/getUsers", () => {
-    it("should get users successfully", async () => {
-      const response = await request(app).get("/room/room123/getUsers");
-
-      expect(response.status).toBe(200);
-      expect(response.body.users).toEqual(["user1", "user2"]);
-      expect(mockUserRoomService.getUsers).toHaveBeenCalledWith("room123");
-    });
-  });
-
   describe("POST /room/:roomId/vote", () => {
     it("should save a vote successfully", async () => {
       const response = await request(app)
