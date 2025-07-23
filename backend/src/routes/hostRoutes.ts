@@ -131,7 +131,7 @@ export const createHostRouter = (
   );
 
   router.post(
-    "rooms/:roomId/setVoting",
+    "/rooms/:roomId/setVoting",
     verifyHost,
     async (req: express.Request, res: express.Response) => {
       try {

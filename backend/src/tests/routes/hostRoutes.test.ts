@@ -17,11 +17,14 @@ const mockSocketService: Partial<SocketService> = {
 const mockRoomService: Partial<RoomService> = {
   createRoom: mock(async () => [null, 201] as any),
   getHostKey: mock(async () => [null, "test-host-key", 200] as any),
+  setVoting: mock(async () => [null, 200] as any),
+  setDone: mock(async () => [null, 200] as any),
 };
 
 const mockNomineeService: Partial<NomineeService> = {
   setNomineeCount: mock(async () => [null, 200] as any),
   addNominee: mock(async () => [null, 200] as any),
+  findWinner: mock(async () => [null, "winner1", 200] as any),
 };
 
 const mockUserRoomService: Partial<UserRoomService> = {
@@ -164,38 +167,110 @@ describe("Host Routes", () => {
     });
   });
 
-  describe("POST /rooms/:roomId/state", () => {
-    it("should update room state successfully", async () => {
+  describe("POST /rooms/:roomId/setVoting", () => {
+    it("should set the room state to voting successfully", async () => {
+      (mockRoomService.setVoting as any).mockResolvedValueOnce([null, 200]);
       const response = await request(app)
-        .post("/rooms/room123/state")
-        .send({ state: "voting", hostKey: "test-host-key" });
+        .post("/rooms/room123/setVoting")
+        .send({ hostKey: "test-host-key" });
 
       expect(response.status).toBe(200);
-      expect(mockRoomService.updateState).toHaveBeenCalledWith(
-        "room123",
-        "voting",
-      );
+      expect(mockRoomService.setVoting).toHaveBeenCalledWith("room123");
       expect(mockSocketService.emitStateChange).toHaveBeenCalledWith(
         "room123",
         "voting",
       );
     });
 
-    it("should return 400 for invalid state", async () => {
+    it("should return 401 for missing host key", async () => {
       const response = await request(app)
-        .post("/rooms/room123/state")
-        .send({ state: "invalid_state", hostKey: "test-host-key" });
-      expect(response.status).toBe(400);
+        .post("/rooms/room123/setVoting")
+        .send({});
+      expect(response.status).toBe(401);
+    });
+
+    it("should return 403 for invalid host key", async () => {
+      const response = await request(app)
+        .post("/rooms/room123/setVoting")
+        .send({ hostKey: "invalid-key" });
+      expect(response.status).toBe(403);
     });
 
     it("should handle service errors gracefully", async () => {
-      (mockRoomService.updateState as any).mockResolvedValueOnce([
+      (mockRoomService.setVoting as any).mockResolvedValueOnce([
         new Error("Redis error"),
         500,
       ]);
       const response = await request(app)
-        .post("/rooms/room123/state")
-        .send({ state: "voting", hostKey: "test-host-key" });
+        .post("/rooms/room123/setVoting")
+        .send({ hostKey: "test-host-key" });
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe("POST /rooms/:roomId/setDone", () => {
+    it("should set the room state to done successfully and find winner", async () => {
+      (mockNomineeService.findWinner as any).mockResolvedValueOnce([
+        null,
+        "winner1",
+        200,
+      ]);
+      (mockRoomService.setDone as any).mockResolvedValueOnce([null, 200]);
+      const response = await request(app)
+        .post("/rooms/room123/setDone")
+        .send({ hostKey: "test-host-key" });
+
+      expect(response.status).toBe(200);
+      expect(mockNomineeService.findWinner).toHaveBeenCalledWith("room123");
+      expect(mockRoomService.setDone).toHaveBeenCalledWith("room123");
+      expect(mockSocketService.emitStateChange).toHaveBeenCalledWith(
+        "room123",
+        "done",
+      );
+      expect(mockSocketService.emitWinner).toHaveBeenCalledWith(
+        "room123",
+        "winner1",
+      );
+    });
+
+    it("should return 401 for missing host key", async () => {
+      const response = await request(app)
+        .post("/rooms/room123/setDone")
+        .send({});
+      expect(response.status).toBe(401);
+    });
+
+    it("should return 403 for invalid host key", async () => {
+      const response = await request(app)
+        .post("/rooms/room123/setDone")
+        .send({ hostKey: "invalid-key" });
+      expect(response.status).toBe(403);
+    });
+
+    it("should handle findWinner service errors gracefully", async () => {
+      (mockNomineeService.findWinner as any).mockResolvedValueOnce([
+        new Error("Winner error"),
+        500,
+      ]);
+      const response = await request(app)
+        .post("/rooms/room123/setDone")
+        .send({ hostKey: "test-host-key" });
+      expect(response.status).toBe(500);
+    });
+
+    it("should handle setDone service errors gracefully", async () => {
+      (mockNomineeService.findWinner as any).mockResolvedValueOnce([
+        null,
+        "winner1",
+        200,
+      ]);
+      (mockRoomService.setDone as any).mockResolvedValueOnce([
+        new Error("Redis error"),
+        500,
+      ]);
+      const response = await request(app)
+        .post("/rooms/room123/setDone")
+        .send({ hostKey: "test-host-key" });
       expect(response.status).toBe(500);
     });
   });
