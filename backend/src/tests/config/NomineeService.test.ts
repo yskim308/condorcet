@@ -8,7 +8,7 @@ const mockRedisClient = {
   hSet: mock(async (key: string, field: string, value: any) => {}),
   hGetAll: mock(async (key: string) => ({ "1": "John Doe" })),
   lPush: mock(async (key: string, value: any) => {}),
-  lRange: mock(async (key:string, start: number, stop: number) => [
+  lRange: mock(async (key: string, start: number, stop: number) => [
     JSON.stringify(["John Doe"]),
   ]),
 };
@@ -54,9 +54,8 @@ describe("NomineeService", () => {
   describe("getNomineeCount", () => {
     it("should get nominee count successfully", async () => {
       mockRedisClient.get.mockResolvedValueOnce("1");
-      const [error, count, status] = await nomineeService.getNomineeCount(
-        "room123",
-      );
+      const [error, count, status] =
+        await nomineeService.getNomineeCount("room123");
 
       expect(error).toBeNull();
       expect(count).toBe(1);
@@ -67,10 +66,9 @@ describe("NomineeService", () => {
     });
 
     it("should return null if count does not exist", async () => {
-      mockRedisClient.get.mockResolvedValueOnce(null);
-      const [error, count, status] = await nomineeService.getNomineeCount(
-        "room123",
-      );
+      mockRedisClient.get.mockResolvedValueOnce("");
+      const [error, count, status] =
+        await nomineeService.getNomineeCount("room123");
 
       expect(error).toBeNull();
       expect(count).toBeNull();
@@ -79,9 +77,8 @@ describe("NomineeService", () => {
 
     it("should return an error if redis fails", async () => {
       mockRedisClient.get.mockRejectedValueOnce(new Error("Redis error"));
-      const [error, count, status] = await nomineeService.getNomineeCount(
-        "room123",
-      );
+      const [error, count, status] =
+        await nomineeService.getNomineeCount("room123");
 
       expect(error).toBeInstanceOf(Error);
       expect(count).toBeNull();
@@ -124,9 +121,8 @@ describe("NomineeService", () => {
   describe("getAllNominees", () => {
     it("should get all nominees successfully", async () => {
       mockRedisClient.hGetAll.mockResolvedValueOnce({ "1": "John Doe" });
-      const [error, nominees, status] = await nomineeService.getAllNominees(
-        "room123",
-      );
+      const [error, nominees, status] =
+        await nomineeService.getAllNominees("room123");
 
       expect(error).toBeNull();
       expect(nominees).toEqual({ "1": "John Doe" });
@@ -138,9 +134,8 @@ describe("NomineeService", () => {
 
     it("should return an error if redis fails", async () => {
       mockRedisClient.hGetAll.mockRejectedValueOnce(new Error("Redis error"));
-      const [error, nominees, status] = await nomineeService.getAllNominees(
-        "room123",
-      );
+      const [error, nominees, status] =
+        await nomineeService.getAllNominees("room123");
 
       expect(error).toBeInstanceOf(Error);
       expect(nominees).toBeNull();
@@ -178,7 +173,8 @@ describe("NomineeService", () => {
       mockRedisClient.lRange.mockResolvedValueOnce([
         JSON.stringify(["John Doe"]),
       ]);
-      const [error, votes, status] = await nomineeService.getAllVotes("room123");
+      const [error, votes, status] =
+        await nomineeService.getAllVotes("room123");
 
       expect(error).toBeNull();
       expect(votes).toEqual([["John Doe"]]);
@@ -192,7 +188,8 @@ describe("NomineeService", () => {
 
     it("should return an empty array if no votes", async () => {
       mockRedisClient.lRange.mockResolvedValueOnce([]);
-      const [error, votes, status] = await nomineeService.getAllVotes("room123");
+      const [error, votes, status] =
+        await nomineeService.getAllVotes("room123");
 
       expect(error).toBeNull();
       expect(votes).toEqual([]);
@@ -201,7 +198,8 @@ describe("NomineeService", () => {
 
     it("should return an error if redis fails", async () => {
       mockRedisClient.lRange.mockRejectedValueOnce(new Error("Redis error"));
-      const [error, votes, status] = await nomineeService.getAllVotes("room123");
+      const [error, votes, status] =
+        await nomineeService.getAllVotes("room123");
 
       expect(error).toBeInstanceOf(Error);
       expect(votes).toBeNull();
@@ -209,3 +207,4 @@ describe("NomineeService", () => {
     });
   });
 });
+
