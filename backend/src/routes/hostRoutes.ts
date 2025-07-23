@@ -162,7 +162,7 @@ export const createHostRouter = (
       try {
         const { roomId } = req.params;
         const [winErr, winner, winCode] =
-          await nomineeService.findWinner(roomId);
+          await nomineeService.tallyVotes(roomId);
         if (winErr) {
           res.status(winCode).json({
             error: `error finding winner: ${winErr.message}`,
