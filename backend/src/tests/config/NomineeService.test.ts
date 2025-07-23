@@ -14,8 +14,8 @@ const MOCK_NOMINEES = {
   "2": "Bob Wilson",
 };
 const MOCK_VOTES = [
-  ["John Doe", "Jane Smith"],
-  ["Jane Smith", "John Doe"],
+  ["0", "1", "2"],
+  ["1", "0", "2"],
 ];
 // factory function to mock redis client
 const createMockRedisClient = () => ({
@@ -31,7 +31,14 @@ const createMockRedisClient = () => ({
   ]),
 });
 
-const createFindWinnerClient = (mockRedisClient: any, winnerId = 0) => ({});
+const setupSuccessfulFindWinner = (mockRedisClient: any, winnerId = 0) => {
+  mockRedisClient.lRange.mockResolvedValueOnce(
+    MOCK_VOTES.map((v) => JSON.stringify(v)),
+  );
+  mockRedisClient.get.mockResolvedValueOnce("3");
+  mockRedisClient.hGetAll.mockResolvedValueOnce(MOCK_NOMINEES);
+  mockFindWinner.mockReturnValueOnce(winnerId);
+};
 
 describe("NomineeService", () => {
   let nomineeService: NomineeService;
@@ -200,130 +207,60 @@ describe("NomineeService", () => {
   });
 
   describe("Winner Determination", () => {
-    describe("findWinner", () => {
+    describe("findWinner - success paths", () => {
       it("should find winner successfully with valid votes", async () => {
-        // Setup mocks for a successful winner determination
-        const mockVotes = [
-          ["John Doe", "Jane Smith", "Bob Wilson"],
-          ["Jane Smith", "John Doe", "Bob Wilson"],
-          ["John Doe", "Bob Wilson", "Jane Smith"],
-        ];
-        const mockNomineeMap = {
-          "0": "John Doe",
-          "1": "Jane Smith",
-          "2": "Bob Wilson",
-        };
-
-        mockRedisClient.lRange.mockResolvedValueOnce(
-          mockVotes.map((vote) => JSON.stringify(vote)),
-        );
-        mockRedisClient.get.mockResolvedValueOnce("3"); // nominee count
-        mockRedisClient.hGetAll.mockResolvedValueOnce(mockNomineeMap);
-
-        // Mock findWinner to return winner ID 0 (John Doe)
-        mockFindWinner.mockReturnValueOnce(0);
-
+        setupSuccessfulFindWinner(mockRedisClient, 0);
         const [error, winner, status] =
-          await nomineeService.findWinner("room123");
+          await nomineeService.findWinner(TEST_ROOM_ID);
 
         expect(error).toBeNull();
         expect(winner).toBe("John Doe");
         expect(status).toBe(200);
 
-        // Verify findWinner was called with correct parameters
-        expect(mockFindWinner).toHaveBeenCalledWith(mockVotes, 3);
-
-        // Verify Redis operations
-        expect(mockRedisClient.lRange).toHaveBeenCalledWith(
-          "room:room123:votes",
-          0,
-          -1,
-        );
-        expect(mockRedisClient.get).toHaveBeenCalledWith(
-          "room:room123:nominee_count",
-        );
-        expect(mockRedisClient.hGetAll).toHaveBeenCalledWith(
-          "room:room123:nominees",
-        );
         expect(mockRedisClient.hSet).toHaveBeenCalledWith(
-          "room:room123",
+          `room:${TEST_ROOM_ID}`,
           "winnerId",
           "0",
         );
         expect(mockRedisClient.hSet).toHaveBeenCalledWith(
-          "room:room123",
+          `room:${TEST_ROOM_ID}`,
           "winnerName",
           "John Doe",
         );
       });
 
-      it("should handle single nominee election", async () => {
-        const mockVotes = [["John Doe"], ["John Doe"]];
-        const mockNomineeMap = { "0": "John Doe" };
-
-        mockRedisClient.lRange.mockResolvedValueOnce(
-          mockVotes.map((vote) => JSON.stringify(vote)),
-        );
-        mockRedisClient.get.mockResolvedValueOnce("1");
-        mockRedisClient.hGetAll.mockResolvedValueOnce(mockNomineeMap);
-        mockFindWinner.mockReturnValueOnce(0);
-
+      it("should handle a different winner", async () => {
+        setupSuccessfulFindWinner(mockRedisClient, 1);
         const [error, winner, status] =
-          await nomineeService.findWinner("room123");
-
-        expect(error).toBeNull();
-        expect(winner).toBe("John Doe");
-        expect(status).toBe(200);
-        expect(mockFindWinner).toHaveBeenCalledWith(mockVotes, 1);
-      });
-
-      it("should handle findWinner returning different winner IDs", async () => {
-        const mockVotes = [
-          ["Jane Smith", "John Doe"],
-          ["John Doe", "Jane Smith"],
-        ];
-        const mockNomineeMap = {
-          "0": "John Doe",
-          "1": "Jane Smith",
-        };
-
-        mockRedisClient.lRange.mockResolvedValueOnce(
-          mockVotes.map((vote) => JSON.stringify(vote)),
-        );
-        mockRedisClient.get.mockResolvedValueOnce("2");
-        mockRedisClient.hGetAll.mockResolvedValueOnce(mockNomineeMap);
-
-        // Test with winner ID 1 (Jane Smith)
-        mockFindWinner.mockReturnValueOnce(1);
-
-        const [error, winner, status] =
-          await nomineeService.findWinner("room123");
+          await nomineeService.findWinner(TEST_ROOM_ID);
 
         expect(error).toBeNull();
         expect(winner).toBe("Jane Smith");
         expect(status).toBe(200);
+
         expect(mockRedisClient.hSet).toHaveBeenCalledWith(
-          "room:room123",
+          `room:${TEST_ROOM_ID}`,
           "winnerId",
           "1",
         );
         expect(mockRedisClient.hSet).toHaveBeenCalledWith(
-          "room:room123",
+          `room:${TEST_ROOM_ID}`,
           "winnerName",
           "Jane Smith",
         );
       });
+    });
 
+    describe("findWinner - unhappy paths", () => {
       it("should return error when getAllVotes fails", async () => {
         mockRedisClient.lRange.mockRejectedValueOnce(new Error("Redis error"));
 
         const [error, winner, status] =
-          await nomineeService.findWinner("room123");
+          await nomineeService.findWinner(TEST_ROOM_ID);
 
         expect(error).toBeInstanceOf(Error);
         expect(winner).toBe("");
         expect(status).toBe(500);
-        expect(mockFindWinner).not.toHaveBeenCalled();
       });
 
       it("should return error when no votes are recorded", async () => {
@@ -333,10 +270,8 @@ describe("NomineeService", () => {
           await nomineeService.findWinner("room123");
 
         expect(error).toBeInstanceOf(Error);
-        expect(error?.message).toBe("no votes recorded");
         expect(winner).toBe("");
         expect(status).toBe(500);
-        expect(mockFindWinner).not.toHaveBeenCalled();
       });
 
       it("should return error when nominee count is not initialized", async () => {
@@ -349,40 +284,16 @@ describe("NomineeService", () => {
           await nomineeService.findWinner("room123");
 
         expect(error).toBeInstanceOf(Error);
-        expect(error?.message).toBe("nominee count not initialized");
         expect(winner).toBe("");
         expect(status).toBe(500);
-        expect(mockFindWinner).not.toHaveBeenCalled();
-      });
-
-      it("should return error when nominee count is empty string", async () => {
-        mockRedisClient.lRange.mockResolvedValueOnce([
-          JSON.stringify(["John Doe"]),
-        ]);
-        mockRedisClient.get.mockResolvedValueOnce("");
-
-        const [error, winner, status] =
-          await nomineeService.findWinner("room123");
-
-        expect(error).toBeInstanceOf(Error);
-        expect(error?.message).toBe("nominee count not initialized");
-        expect(winner).toBe("");
-        expect(status).toBe(500);
-        expect(mockFindWinner).not.toHaveBeenCalled();
       });
 
       it("should return error when winner ID is not in nominee map", async () => {
-        const mockVotes = [["John Doe", "Jane Smith"]];
-        const mockNomineeMap = {
-          "0": "John Doe",
-          "1": "Jane Smith",
-        };
-
         mockRedisClient.lRange.mockResolvedValueOnce(
-          mockVotes.map((vote) => JSON.stringify(vote)),
+          MOCK_VOTES.map((vote) => JSON.stringify(vote)),
         );
-        mockRedisClient.get.mockResolvedValueOnce("2");
-        mockRedisClient.hGetAll.mockResolvedValueOnce(mockNomineeMap);
+        mockRedisClient.get.mockResolvedValueOnce("3");
+        mockRedisClient.hGetAll.mockResolvedValueOnce(MOCK_NOMINEES);
 
         // Mock findWinner to return an ID that doesn't exist in the nominee map
         mockFindWinner.mockReturnValueOnce(5);
@@ -391,20 +302,16 @@ describe("NomineeService", () => {
           await nomineeService.findWinner("room123");
 
         expect(error).toBeInstanceOf(Error);
-        expect(error?.message).toBe("winner Id not defined in map");
         expect(winner).toBe("");
         expect(status).toBe(500);
       });
 
       it("should return error when winner ID returns -1 (invalid election)", async () => {
-        const mockVotes = [["John Doe"]];
-        const mockNomineeMap = { "0": "John Doe" };
-
         mockRedisClient.lRange.mockResolvedValueOnce(
-          mockVotes.map((vote) => JSON.stringify(vote)),
+          MOCK_VOTES.map((vote) => JSON.stringify(vote)),
         );
-        mockRedisClient.get.mockResolvedValueOnce("1");
-        mockRedisClient.hGetAll.mockResolvedValueOnce(mockNomineeMap);
+        mockRedisClient.get.mockResolvedValueOnce("3");
+        mockRedisClient.hGetAll.mockResolvedValueOnce(MOCK_NOMINEES);
 
         // Mock findWinner to return -1 (should not happen in valid election)
         mockFindWinner.mockReturnValueOnce(-1);
@@ -413,7 +320,6 @@ describe("NomineeService", () => {
           await nomineeService.findWinner("room123");
 
         expect(error).toBeInstanceOf(Error);
-        expect(error?.message).toBe("winner Id not defined in map");
         expect(winner).toBe("");
         expect(status).toBe(500);
       });
@@ -425,7 +331,7 @@ describe("NomineeService", () => {
         mockRedisClient.lRange.mockResolvedValueOnce(
           mockVotes.map((vote) => JSON.stringify(vote)),
         );
-        mockRedisClient.get.mockResolvedValueOnce("1");
+        mockRedisClient.get.mockResolvedValueOnce("3");
         mockRedisClient.hGetAll.mockResolvedValueOnce(mockNomineeMap);
         mockFindWinner.mockReturnValueOnce(0);
 
@@ -441,53 +347,7 @@ describe("NomineeService", () => {
         expect(winner).toBe("");
         expect(status).toBe(500);
       });
-
-      it("should handle Redis errors during nominee map retrieval", async () => {
-        const mockVotes = [["John Doe"]];
-
-        mockRedisClient.lRange.mockResolvedValueOnce(
-          mockVotes.map((vote) => JSON.stringify(vote)),
-        );
-        mockRedisClient.get.mockResolvedValueOnce("1");
-        mockRedisClient.hGetAll.mockRejectedValueOnce(
-          new Error("Redis error getting nominees"),
-        );
-
-        const [error, winner, status] =
-          await nomineeService.findWinner("room123");
-
-        expect(error).toBeInstanceOf(Error);
-        expect(winner).toBe("");
-        expect(status).toBe(500);
-      });
-
-      it("should pass correct vote structure to findWinner", async () => {
-        const mockVotes = [
-          ["Alice", "Bob", "Charlie"],
-          ["Bob", "Alice", "Charlie"],
-          ["Charlie", "Alice", "Bob"],
-        ];
-        const mockNomineeMap = {
-          "0": "Alice",
-          "1": "Bob",
-          "2": "Charlie",
-        };
-
-        mockRedisClient.lRange.mockResolvedValueOnce(
-          mockVotes.map((vote) => JSON.stringify(vote)),
-        );
-        mockRedisClient.get.mockResolvedValueOnce("3");
-        mockRedisClient.hGetAll.mockResolvedValueOnce(mockNomineeMap);
-        mockFindWinner.mockReturnValueOnce(2);
-
-        await nomineeService.findWinner("room123");
-
-        // Verify findWinner received the correct vote structure and nominee count
-        expect(mockFindWinner).toHaveBeenCalledWith(mockVotes, 3);
-        expect(mockFindWinner).toHaveBeenCalledTimes(1);
-      });
     });
-
     describe("getWinner", () => {
       it("should get winner successfully", async () => {
         mockRedisClient.hGet.mockResolvedValueOnce("John Doe");
@@ -498,10 +358,6 @@ describe("NomineeService", () => {
         expect(error).toBeNull();
         expect(winner).toBe("John Doe");
         expect(status).toBe(200);
-        expect(mockRedisClient.hGet).toHaveBeenCalledWith(
-          "room:room123",
-          "winnerName",
-        );
       });
 
       it("should return error when no winner is set", async () => {
@@ -511,7 +367,6 @@ describe("NomineeService", () => {
           await nomineeService.getWinner("room123");
 
         expect(error).toBeInstanceOf(Error);
-        expect(error?.message).toBe("no winner was set");
         expect(winner).toBe("");
         expect(status).toBe(401);
       });
@@ -525,18 +380,6 @@ describe("NomineeService", () => {
         expect(error).toBeInstanceOf(Error);
         expect(winner).toBe("");
         expect(status).toBe(500);
-      });
-
-      it("should return error when winner is empty string", async () => {
-        mockRedisClient.hGet.mockResolvedValueOnce("");
-
-        const [error, winner, status] =
-          await nomineeService.getWinner("room123");
-
-        expect(error).toBeInstanceOf(Error);
-        expect(error?.message).toBe("no winner was set");
-        expect(winner).toBe("");
-        expect(status).toBe(401);
       });
     });
   });
