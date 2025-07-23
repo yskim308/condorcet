@@ -117,14 +117,16 @@ export default class NomineeService {
 
   async findWinner(roomId: string): Promise<[Error | null, string, number]> {
     try {
-      // get votes
-      const [voteErr, votes, voteCode] = await this.getAllVotes(roomId);
-      if (voteErr) {
-        return [voteErr, "", voteCode];
+      const votesAsJson = await this.redisClient.lRange(
+        `room:${roomId}:votes`,
+        0,
+        -1,
+      );
+      if (!votesAsJson) {
+        return [null, "", 200]; // Return empty array if no votes
       }
-      if (!votes) {
-        return [new Error("no votes recorded"), "", 500];
-      }
+      // Parse each JSON string back into an array of strings
+      const votes = votesAsJson.map((vote) => JSON.parse(vote));
 
       // get nominee count
       const nomineeCount = await this.redisClient.get(
