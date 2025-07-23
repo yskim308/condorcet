@@ -10,6 +10,7 @@ const createMockRedisClient = () => ({
   sIsMember: mock(async (key: string, value: any) => true),
   sMembers: mock(async (key: string) => VOTED_USERS),
   hGet: mock(async (key: string, field: string) => HOST_USER),
+  expire: mock(async (key: string, ttl: number) => {}),
 });
 
 describe("UserRoomService", () => {

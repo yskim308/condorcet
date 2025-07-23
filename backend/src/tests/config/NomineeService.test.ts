@@ -30,6 +30,7 @@ const createMockRedisClient = () => ({
   lRange: mock(async (key: string, start: number, stop: number) =>
     MOCK_VOTES.map((v) => JSON.stringify(v)),
   ),
+  expire: mock(async (key: string, ttl: number) => {}),
 });
 
 const setupSuccessfulTallyVotesMocks = (

@@ -7,6 +7,7 @@ const createMockRedisClient = () => ({
   hSet: mock(async (key: string, values: any) => 1),
   hGet: mock(async (key: string, field: string) => "nominating"),
   exists: mock(async (key: string) => 1),
+  expire: mock(async (key: string, ttl: number) => {}),
 });
 
 describe("RoomService", () => {
