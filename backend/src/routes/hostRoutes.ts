@@ -167,13 +167,14 @@ export const createHostRouter = (
           res.status(winCode).json({
             error: `error finding winner: ${winErr.message}`,
           });
+          return;
         }
 
         const [err, code] = await roomService.setVoting(roomId);
         if (err) {
           res
             .status(code)
-            .json({ error: `couldn't set room to voting: ${err.message}` });
+            .json({ error: `couldn't set room to done: ${err.message}` });
           return;
         }
 
