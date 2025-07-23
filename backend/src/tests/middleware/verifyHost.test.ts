@@ -5,7 +5,7 @@ import { createVerifyHostMiddleware } from "../../middleware/verifyHost";
 import type RoomService from "../../config/RoomService";
 
 // Mock RoomService
-const mockRoomService: Partial<RoomService> = {
+const mockRoomService: any = {
   getHostKey: mock(async (roomId: string) => {
     if (roomId === "room123") {
       return [null, "test-host-key", 200];
@@ -20,7 +20,9 @@ describe("verifyHost Middleware", () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    const verifyHost = createVerifyHostMiddleware(mockRoomService as RoomService);
+    const verifyHost = createVerifyHostMiddleware(
+      mockRoomService as RoomService,
+    );
     app.post("/test/:roomId", verifyHost, (req, res) => {
       res.status(200).send("OK");
     });
@@ -67,3 +69,4 @@ describe("verifyHost Middleware", () => {
     expect(response.status).toBe(500);
   });
 });
+
