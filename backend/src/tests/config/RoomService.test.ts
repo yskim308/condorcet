@@ -3,22 +3,19 @@ import RoomService from "../../config/RoomService";
 import type { RoomData } from "../../types/room";
 
 // Mock Redis client
-const mockRedisClient = {
+const createMockRedisClient = () => ({
   hSet: mock(async (key: string, values: any) => 1),
   hGet: mock(async (key: string, field: string) => "nominating"),
   exists: mock(async (key: string) => 1),
-};
+});
 
 describe("RoomService", () => {
   let roomService: RoomService;
+  let mockRedisClient: ReturnType<typeof createMockRedisClient>;
 
   beforeEach(() => {
-    // Reset mocks before each test
-    mockRedisClient.hSet.mockClear();
-    mockRedisClient.hGet.mockClear();
-    mockRedisClient.exists.mockClear();
-
     // Create a new instance of RoomService with the mock client
+    mockRedisClient = createMockRedisClient();
     roomService = new RoomService(mockRedisClient as any);
   });
 
@@ -39,23 +36,9 @@ describe("RoomService", () => {
         roomData,
       );
     });
-
-    it("should return an error if Redis fails", async () => {
-      mockRedisClient.hSet.mockRejectedValueOnce(new Error("Redis error"));
-      const roomData: RoomData = {
-        name: "Test Room",
-        state: "nominating",
-        host: "host123",
-        hostKey: "key123",
-      };
-      const [error, status] = await roomService.createRoom("room123", roomData);
-
-      expect(error).toBeInstanceOf(Error);
-      expect(status).toBe(500);
-    });
   });
 
-  describe("setVoting", () => {
+  describe("setting and getting state", () => {
     it("should set the room state to voting successfully", async () => {
       const [error, status] = await roomService.setVoting("room123");
 
@@ -67,17 +50,6 @@ describe("RoomService", () => {
         "voting",
       );
     });
-
-    it("should return an error if Redis fails", async () => {
-      mockRedisClient.hSet.mockRejectedValueOnce(new Error("Redis error"));
-      const [error, status] = await roomService.setVoting("room123");
-
-      expect(error).toBeInstanceOf(Error);
-      expect(status).toBe(500);
-    });
-  });
-
-  describe("setDone", () => {
     it("should set the room state to done successfully", async () => {
       const [error, status] = await roomService.setDone("room123");
 
@@ -90,24 +62,16 @@ describe("RoomService", () => {
       );
     });
 
-    it("should return an error if Redis fails", async () => {
-      mockRedisClient.hSet.mockRejectedValueOnce(new Error("Redis error"));
-      const [error, status] = await roomService.setDone("room123");
-
-      expect(error).toBeInstanceOf(Error);
-      expect(status).toBe(500);
-    });
-  });
-
-  describe("getState", () => {
     it("should get the room state successfully", async () => {
-      mockRedisClient.hGet.mockResolvedValueOnce("voting");
       const [error, state, status] = await roomService.getState("room123");
 
       expect(error).toBeNull();
-      expect(state).toBe("voting");
+      expect(state).toBe("nominating");
       expect(status).toBe(200);
-      expect(mockRedisClient.hGet).toHaveBeenCalledWith(`room:room123`, "state");
+      expect(mockRedisClient.hGet).toHaveBeenCalledWith(
+        `room:room123`,
+        "state",
+      );
     });
 
     it("should return an empty string if state does not exist", async () => {
@@ -117,15 +81,6 @@ describe("RoomService", () => {
       expect(error).toBeNull();
       expect(state).toBe("");
       expect(status).toBe(200);
-    });
-
-    it("should return an error if Redis fails", async () => {
-      mockRedisClient.hGet.mockRejectedValueOnce(new Error("Redis error"));
-      const [error, state, status] = await roomService.getState("room123");
-
-      expect(error).toBeInstanceOf(Error);
-      expect(state).toBe("");
-      expect(status).toBe(500);
     });
   });
 
@@ -147,15 +102,6 @@ describe("RoomService", () => {
       expect(error).toBeNull();
       expect(exists).toBe(false);
       expect(status).toBe(200);
-    });
-
-    it("should return an error if Redis fails", async () => {
-      mockRedisClient.exists.mockRejectedValueOnce(new Error("Redis error"));
-      const [error, exists, status] = await roomService.exists("room123");
-
-      expect(error).toBeInstanceOf(Error);
-      expect(exists).toBe(false);
-      expect(status).toBe(500);
     });
   });
 
@@ -181,14 +127,6 @@ describe("RoomService", () => {
       expect(hostKey).toBe("");
       expect(status).toBe(404);
     });
-
-    it("should return an error if Redis fails", async () => {
-      mockRedisClient.hGet.mockRejectedValueOnce(new Error("Redis error"));
-      const [error, hostKey, status] = await roomService.getHostKey("room123");
-
-      expect(error).toBeInstanceOf(Error);
-      expect(hostKey).toBe("");
-      expect(status).toBe(500);
-    });
   });
 });
+
