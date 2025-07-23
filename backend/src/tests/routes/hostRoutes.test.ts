@@ -12,6 +12,7 @@ import type { CreateVerifyHostMiddleware } from "../../middleware/verifyHost";
 const mockSocketService: Partial<SocketService> = {
   emitNewNomination: mock(() => {}),
   emitStateChange: mock(() => {}),
+  emitWinner: mock(() => {}),
 };
 
 const mockRoomService: Partial<RoomService> = {
@@ -169,7 +170,6 @@ describe("Host Routes", () => {
 
   describe("POST /rooms/:roomId/setVoting", () => {
     it("should set the room state to voting successfully", async () => {
-      (mockRoomService.setVoting as any).mockResolvedValueOnce([null, 200]);
       const response = await request(app)
         .post("/rooms/room123/setVoting")
         .send({ hostKey: "test-host-key" });
@@ -275,4 +275,3 @@ describe("Host Routes", () => {
     });
   });
 });
-

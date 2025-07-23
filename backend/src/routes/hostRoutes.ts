@@ -170,7 +170,7 @@ export const createHostRouter = (
           return;
         }
 
-        const [err, code] = await roomService.setVoting(roomId);
+        const [err, code] = await roomService.setDone(roomId);
         if (err) {
           res
             .status(code)
@@ -185,8 +185,8 @@ export const createHostRouter = (
           winner: winner,
         });
       } catch (error) {
-        console.error("error setting room to ");
-        res.status(500).json({ error: "Failed to set state to voting" });
+        console.error("Error in setDone route:", error);
+        res.status(500).json({ error: "Failed to set state to done" });
         return;
       }
     },
