@@ -1,6 +1,7 @@
 import type { RedisClientType } from "redis";
 import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
 import type { RoomData } from "../types/room";
+import { TTL } from "./constants";
 
 class RoomService {
   private redisClient: RedisClientType;
@@ -13,8 +14,10 @@ class RoomService {
     roomId: string,
     roomData: RoomData,
   ): Promise<[Error | null, number]> {
+    const key = `room:${roomId}`;
     try {
-      await this.redisClient.hSet(`room:${roomId}`, { ...roomData });
+      await this.redisClient.hSet(key, { ...roomData });
+      await this.redisClient.expire(key, TTL);
       return [null, 200];
     } catch (error: unknown) {
       console.error("error creating room: " + getErrorMessage(error));

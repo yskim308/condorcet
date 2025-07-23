@@ -2,6 +2,7 @@ import type { RedisClientType } from "redis";
 import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
 import type { NomineeMap } from "../types/nominee";
 import findWinner from "../util/findWinner";
+import { TTL } from "./constants";
 
 export default class NomineeService {
   private redisClient: RedisClientType;
@@ -10,8 +11,10 @@ export default class NomineeService {
     this.redisClient = redisClient;
   }
   async setNomineeCount(roomId: string): Promise<[Error | null, number]> {
+    const key = `room:${roomId}:nominee_count`;
     try {
-      await this.redisClient.set(`room:${roomId}:nominee_count`, -1);
+      await this.redisClient.set(key, -1);
+      await this.redisClient.expire(key, TTL);
       return [null, 200];
     } catch (error: unknown) {
       console.error("error setting nominee count: " + getErrorMessage(error));
@@ -39,15 +42,17 @@ export default class NomineeService {
     roomId: string,
     nominee: string,
   ): Promise<[Error | null, number]> {
+    const key = `room:${roomId}:nominees`;
     try {
       const nominee_id = await this.redisClient.incr(
         `room:${roomId}:nominee_count`,
       );
       await this.redisClient.hSet(
-        `room:${roomId}:nominees`,
+        key,
         nominee_id,
         nominee,
       );
+      await this.redisClient.expire(key, TTL);
       return [null, 200];
     } catch (error: unknown) {
       console.error("error adding nominee: " + getErrorMessage(error));
@@ -77,13 +82,15 @@ export default class NomineeService {
     roomId: string,
     preferences: string[],
   ): Promise<[Error | null, number]> {
+    const key = `room:${roomId}:votes`;
     try {
       // Serialize the array to a JSON string to preserve its structure
       const serializedPreferences = JSON.stringify(preferences);
       await this.redisClient.lPush(
-        `room:${roomId}:votes`,
+        key,
         serializedPreferences,
       );
+      await this.redisClient.expire(key, TTL);
       return [null, 200];
     } catch (error: unknown) {
       console.error(

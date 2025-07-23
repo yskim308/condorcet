@@ -1,6 +1,7 @@
 import { redisClient } from "./redisClient";
 import type { RedisClientType } from "redis";
 import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
+import { TTL } from "./constants";
 
 class UserRoomService {
   private redisClient: RedisClientType;
@@ -13,8 +14,10 @@ class UserRoomService {
     roomId: string,
     userName: string,
   ): Promise<[Error | null, number]> {
+    const key = `room:${roomId}:users`;
     try {
-      await this.redisClient.sAdd(`room:${roomId}:users`, userName);
+      await this.redisClient.sAdd(key, userName);
+      await this.redisClient.expire(key, TTL);
       return [null, 200];
     } catch (error: unknown) {
       console.error("error adding user to room: " + getErrorMessage(error));
@@ -81,6 +84,7 @@ class UserRoomService {
     roomId: string,
     userName: string,
   ): Promise<[Error | null, number]> {
+    const key = `room:${roomId}:voted`;
     try {
       const [err, exists, code] = await this.userExists(roomId, userName);
       if (!exists) {
@@ -89,7 +93,8 @@ class UserRoomService {
           404,
         ];
       }
-      await this.redisClient.sAdd(`room:${roomId}:voted`, userName);
+      await this.redisClient.sAdd(key, userName);
+      await this.redisClient.expire(key, TTL);
       return [null, 200];
     } catch (error: unknown) {
       return getRedisError(error);
