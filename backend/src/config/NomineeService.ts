@@ -115,18 +115,18 @@ export default class NomineeService {
     }
   }
 
-  async findWinner(roomId: string): Promise<[Error | null, string, number]> {
+  async tallyVotes(roomId: string): Promise<[Error | null, string, number]> {
     try {
       const votesAsJson = await this.redisClient.lRange(
         `room:${roomId}:votes`,
         0,
         -1,
       );
-      if (!votesAsJson) {
-        return [null, "", 200]; // Return empty array if no votes
-      }
       // Parse each JSON string back into an array of strings
       const votes = votesAsJson.map((vote) => JSON.parse(vote));
+      if (!votes || votes.length === 0) {
+        return [new Error("no votes recorded"), "", 200];
+      }
 
       // get nominee count
       const nomineeCount = await this.redisClient.get(
@@ -138,12 +138,15 @@ export default class NomineeService {
 
       // find winner with util, then set in redis
       const winnerId = findWinner(votes, parseInt(nomineeCount));
+      if (winnerId < 0) {
+        return [new Error("winnerID not valid"), "", 500];
+      }
 
       // get the nominee map to find winner string
       const nomineeMap = await this.redisClient.hGetAll(
         `room:${roomId}:nominees`,
       );
-      const winner: string = nomineeMap[winnerId];
+      const winner: string = nomineeMap[String(winnerId)];
       if (!winner) {
         return [new Error("winner Id not defined in map"), "", 500];
       }
