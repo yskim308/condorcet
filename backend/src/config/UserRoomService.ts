@@ -9,133 +9,53 @@ class UserRoomService {
     this.redisClient = redisClient;
   }
 
-  async enrollUser(
-    roomId: string,
-    userName: string,
-  ): Promise<[Error | null, number]> {
+  async enrollUser(roomId: string, userName: string) {
     const key = `room:${roomId}:users`;
-    try {
-      await this.redisClient.sAdd(key, userName);
-      await this.redisClient.expire(key, TTL);
-      return [null, 200];
-    } catch (error: unknown) {
-      console.error("error adding user to room: " + getErrorMessage(error));
-      return getRedisError(error);
-    }
+    await this.redisClient.sAdd(key, userName);
+    await this.redisClient.expire(key, TTL);
   }
 
-  async userExists(
-    roomId: string,
-    userName: string,
-  ): Promise<[Error | null, boolean, number]> {
-    try {
-      const exists = await this.redisClient.sIsMember(
-        `room:${roomId}:users`,
-        userName,
-      );
-      if (!exists) {
-        return [null, false, 200];
-      } else {
-        return [null, true, 200];
-      }
-    } catch (error: unknown) {
-      console.error(
-        `error checking if user ${userName} exists` + getErrorMessage(error),
-      );
-      const [err, code] = getRedisError(error);
-      return [err, false, code];
-    }
+  async userExists(roomId: string, userName: string): Promise<boolean> {
+    const exists = await this.redisClient.sIsMember(
+      `room:${roomId}:users`,
+      userName,
+    );
+    return exists === 1 ? true : false;
   }
 
-  async getUsers(roomId: string): Promise<[Error | null, string[], number]> {
-    try {
-      const members: string[] = await this.redisClient.sMembers(
-        `room:${roomId}:users`,
-      );
-      return [null, members, 200];
-    } catch (error: unknown) {
-      console.error(
-        `error getting users for room ${roomId}` + getErrorMessage(error),
-      );
-      const [err, code] = getRedisError(error);
-      return [err, [], 200];
-    }
+  async getUsers(roomId: string): Promise<string[]> {
+    const members: string[] = await this.redisClient.sMembers(
+      `room:${roomId}:users`,
+    );
+    return members;
   }
 
-  async getRole(
-    roomId: string,
-    userName: string,
-  ): Promise<[Error | null, string, number]> {
-    try {
-      const roomHost = await this.redisClient.hGet(`room:${roomId}`, "host");
-      if (userName === roomHost) {
-        return [null, "host", 200];
-      } else {
-        return [null, "user", 200];
-      }
-    } catch (error: unknown) {
-      const [err, code] = getRedisError(error);
-      return [err, "", code];
-    }
+  async getRole(roomId: string, userName: string): Promise<string> {
+    const roomHost = await this.redisClient.hGet(`room:${roomId}`, "host");
+    return userName === roomHost ? "host" : "user";
   }
 
-  async setUserVoted(
-    roomId: string,
-    userName: string,
-  ): Promise<[Error | null, number]> {
+  async setUserVoted(roomId: string, userName: string) {
     const key = `room:${roomId}:voted`;
-    try {
-      const [err, exists, code] = await this.userExists(roomId, userName);
-      if (!exists) {
-        return [
-          new Error(`User ${userName} does not exist in room ${roomId}`),
-          404,
-        ];
-      }
-      await this.redisClient.sAdd(key, userName);
-      await this.redisClient.expire(key, TTL);
-      return [null, 200];
-    } catch (error: unknown) {
-      return getRedisError(error);
+    const exists = await this.userExists(roomId, userName);
+    if (!exists) {
+      throw new Error(`User ${userName} does not exist in room ${roomId}`);
     }
+    await this.redisClient.sAdd(key, userName);
+    await this.redisClient.expire(key, TTL);
   }
 
-  async getVotedUsers(
-    roomId: string,
-  ): Promise<[Error | null, string[], number]> {
-    try {
-      const votedUsers = await this.redisClient.sMembers(
-        `room:${roomId}:voted`,
-      );
-      if (!votedUsers) {
-        return [null, [], 200];
-      } else {
-        return [null, votedUsers, 200];
-      }
-    } catch (error: unknown) {
-      const [err, code] = getRedisError(error);
-      return [err, [], code];
-    }
+  async getVotedUsers(roomId: string): Promise<string[]> {
+    const votedUsers = await this.redisClient.sMembers(`room:${roomId}:voted`);
+    return votedUsers ? votedUsers : [];
   }
 
-  async checkUserVoted(
-    roomId: string,
-    userName: string,
-  ): Promise<[Error | null, boolean, number]> {
-    try {
-      const exists = await this.redisClient.sIsMember(
-        `room:${roomId}:voted`,
-        userName,
-      );
-      if (exists) {
-        return [null, true, 200];
-      } else {
-        return [null, false, 200];
-      }
-    } catch (error: unknown) {
-      const [err, code] = getRedisError(error);
-      return [err, false, code];
-    }
+  async checkUserVoted(roomId: string, userName: string): Promise<boolean> {
+    const exists = await this.redisClient.sIsMember(
+      `room:${roomId}:voted`,
+      userName,
+    );
+    return exists === 1 ? true : false;
   }
 }
 
