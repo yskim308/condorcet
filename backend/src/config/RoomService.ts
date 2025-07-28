@@ -10,80 +10,33 @@ class RoomService {
     this.redisClient = redisClient;
   }
 
-  async createRoom(
-    roomId: string,
-    roomData: RoomData,
-  ): Promise<[Error | null, number]> {
+  async createRoom(roomId: string, roomData: RoomData) {
     const key = `room:${roomId}`;
-    try {
-      await this.redisClient.hSet(key, { ...roomData });
-      await this.redisClient.expire(key, TTL);
-      return [null, 200];
-    } catch (error: unknown) {
-      console.error("error creating room: " + getErrorMessage(error));
-      return getRedisError(error);
-    }
+    await this.redisClient.hSet(key, { ...roomData });
+    await this.redisClient.expire(key, TTL);
   }
 
-  async setVoting(roomId: string): Promise<[Error | null, number]> {
-    try {
-      await this.redisClient.hSet(`room:${roomId}`, "state", "voting");
-      return [null, 200];
-    } catch (error: unknown) {
-      console.error("error setting state to voting: " + getErrorMessage(error));
-      return getRedisError(error);
-    }
+  async setVoting(roomId: string) {
+    await this.redisClient.hSet(`room:${roomId}`, "state", "voting");
   }
 
-  async setDone(roomId: string): Promise<[Error | null, number]> {
-    try {
-      await this.redisClient.hSet(`room:${roomId}`, "state", "done");
-      return [null, 200];
-    } catch (error: unknown) {
-      console.error("error setting state to done: " + getErrorMessage(error));
-      return getRedisError(error);
-    }
+  async setDone(roomId: string) {
+    await this.redisClient.hSet(`room:${roomId}`, "state", "done");
   }
 
-  async getState(roomId: string): Promise<[Error | null, string, number]> {
-    try {
-      const roomState = await this.redisClient.hGet(`room:${roomId}`, "state");
-      if (roomState) {
-        return [null, String(roomState), 200];
-      } else {
-        return [null, "", 200];
-      }
-    } catch (error: unknown) {
-      console.error("error getting room state: " + getErrorMessage(error));
-      const [err, code] = getRedisError(error);
-      return [err, "", code];
-    }
+  async getState(roomId: string): Promise<string> {
+    const roomState = await this.redisClient.hGet(`room:${roomId}`, "state");
+    return roomState ? roomState : "";
   }
 
-  async exists(roomId: string): Promise<[Error | null, boolean, number]> {
-    try {
-      const roomExists = await this.redisClient.exists(`room:${roomId}`);
-      return [null, roomExists === 1, 200];
-    } catch (error: unknown) {
-      console.error("error getting room state: " + getErrorMessage(error));
-      const [err, code] = getRedisError(error);
-      return [err, false, code];
-    }
+  async exists(roomId: string): Promise<boolean> {
+    const roomExists = await this.redisClient.exists(`room:${roomId}`);
+    return roomExists === 1 ? true : false;
   }
 
-  async getHostKey(roomId: string): Promise<[Error | null, string, number]> {
-    try {
-      const hostKey = await this.redisClient.hGet(`room:${roomId}`, "hostKey");
-      if (hostKey) {
-        return [null, String(hostKey), 200];
-      } else {
-        return [new Error("no hostkey or room not found"), "", 404];
-      }
-    } catch (error) {
-      console.error("error getting hostkey: " + getErrorMessage(error));
-      const [err, code] = getRedisError(error);
-      return [err, "", code];
-    }
+  async getHostKey(roomId: string): Promise<string> {
+    const hostKey = await this.redisClient.hGet(`room:${roomId}`, "hostKey");
+    return hostKey ? hostKey : "";
   }
 }
 
