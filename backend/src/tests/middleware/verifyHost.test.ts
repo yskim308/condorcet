@@ -6,12 +6,7 @@ import type RoomService from "../../config/RoomService";
 
 // Mock RoomService
 const mockRoomService: any = {
-  getHostKey: mock(async (roomId: string) => {
-    if (roomId === "room123") {
-      return [null, "test-host-key", 200];
-    }
-    return [new Error("Room not found"), "", 404];
-  }),
+  getHostKey: mock(async (roomId: string) => {}),
 };
 
 describe("verifyHost Middleware", () => {
@@ -32,6 +27,7 @@ describe("verifyHost Middleware", () => {
   });
 
   it("should call next() if host key is valid", async () => {
+    (mockRoomService.getHostKey as any).mockResolvedValueOnce("test-host-key");
     const response = await request(app).post("/test/room123").send({
       hostKey: "test-host-key",
     });
@@ -45,28 +41,16 @@ describe("verifyHost Middleware", () => {
     const response = await request(app).post("/test/room123").send({});
 
     expect(response.status).toBe(401);
+    expect(mockRoomService.getHostKey).not.toHaveBeenCalled();
   });
 
   it("should return 403 if host key is invalid", async () => {
+    (mockRoomService.getHostKey as any).mockResolvedValueOnce("test-host-key");
     const response = await request(app).post("/test/room123").send({
       hostKey: "invalid-key",
     });
 
     expect(response.status).toBe(403);
-  });
-
-  it("should return 500 if the service throws an error", async () => {
-    (mockRoomService.getHostKey as any).mockResolvedValueOnce([
-      new Error("service error"),
-      "",
-      500,
-    ]);
-
-    const response = await request(app).post("/test/room123").send({
-      hostKey: "test-host-key",
-    });
-
-    expect(response.status).toBe(500);
+    expect(mockRoomService.getHostKey).toHaveBeenCalledWith("room123");
   });
 });
-

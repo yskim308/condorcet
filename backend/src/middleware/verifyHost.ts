@@ -35,8 +35,7 @@ export const createVerifyHostMiddleware: CreateVerifyHostMiddleware = (
 
       next();
     } catch (error) {
-      res.status(500).json({ error: "host key verification failed" });
-      return;
+      next(error);
     }
   };
 };
