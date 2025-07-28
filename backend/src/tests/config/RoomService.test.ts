@@ -28,23 +28,22 @@ describe("RoomService", () => {
         host: "host123",
         hostKey: "key123",
       };
-      const [error, status] = await roomService.createRoom("room123", roomData);
+      await roomService.createRoom("room123", roomData);
 
-      expect(error).toBeNull();
-      expect(status).toBe(200);
-      expect(mockRedisClient.hSet).toHaveBeenCalledWith(
+      expect(mockRedisClient.hSet).toHaveBeenCalledWith(`room:room123`, {
+        ...roomData,
+      });
+      expect(mockRedisClient.expire).toHaveBeenCalledWith(
         `room:room123`,
-        roomData,
+        expect.any(Number),
       );
     });
   });
 
   describe("setting and getting state", () => {
     it("should set the room state to voting successfully", async () => {
-      const [error, status] = await roomService.setVoting("room123");
+      await roomService.setVoting("room123");
 
-      expect(error).toBeNull();
-      expect(status).toBe(200);
       expect(mockRedisClient.hSet).toHaveBeenCalledWith(
         `room:room123`,
         "state",
@@ -52,10 +51,8 @@ describe("RoomService", () => {
       );
     });
     it("should set the room state to done successfully", async () => {
-      const [error, status] = await roomService.setDone("room123");
+      await roomService.setDone("room123");
 
-      expect(error).toBeNull();
-      expect(status).toBe(200);
       expect(mockRedisClient.hSet).toHaveBeenCalledWith(
         `room:room123`,
         "state",
@@ -64,11 +61,9 @@ describe("RoomService", () => {
     });
 
     it("should get the room state successfully", async () => {
-      const [error, state, status] = await roomService.getState("room123");
+      const state = await roomService.getState("room123");
 
-      expect(error).toBeNull();
       expect(state).toBe("nominating");
-      expect(status).toBe(200);
       expect(mockRedisClient.hGet).toHaveBeenCalledWith(
         `room:room123`,
         "state",
@@ -77,57 +72,46 @@ describe("RoomService", () => {
 
     it("should return an empty string if state does not exist", async () => {
       mockRedisClient.hGet.mockResolvedValueOnce(null);
-      const [error, state, status] = await roomService.getState("room123");
+      const state = await roomService.getState("room123");
 
-      expect(error).toBeNull();
       expect(state).toBe("");
-      expect(status).toBe(200);
     });
   });
 
   describe("exists", () => {
     it("should return true if the room exists", async () => {
       mockRedisClient.exists.mockResolvedValueOnce(1);
-      const [error, exists, status] = await roomService.exists("room123");
+      const exists = await roomService.exists("room123");
 
-      expect(error).toBeNull();
       expect(exists).toBe(true);
-      expect(status).toBe(200);
       expect(mockRedisClient.exists).toHaveBeenCalledWith(`room:room123`);
     });
 
     it("should return false if the room does not exist", async () => {
       mockRedisClient.exists.mockResolvedValueOnce(0);
-      const [error, exists, status] = await roomService.exists("room123");
+      const exists = await roomService.exists("room123");
 
-      expect(error).toBeNull();
       expect(exists).toBe(false);
-      expect(status).toBe(200);
     });
   });
 
   describe("getHostKey", () => {
     it("should get the host key successfully", async () => {
       mockRedisClient.hGet.mockResolvedValueOnce("key123");
-      const [error, hostKey, status] = await roomService.getHostKey("room123");
+      const hostKey = await roomService.getHostKey("room123");
 
-      expect(error).toBeNull();
       expect(hostKey).toBe("key123");
-      expect(status).toBe(200);
       expect(mockRedisClient.hGet).toHaveBeenCalledWith(
         `room:room123`,
         "hostKey",
       );
     });
 
-    it("should return an error if host key does not exist", async () => {
+    it("should return an empty string if host key does not exist", async () => {
       mockRedisClient.hGet.mockResolvedValueOnce(null);
-      const [error, hostKey, status] = await roomService.getHostKey("room123");
+      const hostKey = await roomService.getHostKey("room123");
 
-      expect(error).toBeInstanceOf(Error);
       expect(hostKey).toBe("");
-      expect(status).toBe(404);
     });
   });
 });
-
