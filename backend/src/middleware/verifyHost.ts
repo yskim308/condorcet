@@ -1,13 +1,17 @@
 import type express from "express";
 import type RoomService from "../config/RoomService";
 
-export type CreateVerifyHostMiddleware = (roomService: RoomService) => (
+export type CreateVerifyHostMiddleware = (
+  roomService: RoomService,
+) => (
   req: express.Request,
   res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => Promise<void>;
 
-export const createVerifyHostMiddleware: CreateVerifyHostMiddleware = (roomService) => {
+export const createVerifyHostMiddleware: CreateVerifyHostMiddleware = (
+  roomService,
+) => {
   return async (
     req: express.Request,
     res: express.Response,
@@ -22,16 +26,7 @@ export const createVerifyHostMiddleware: CreateVerifyHostMiddleware = (roomServi
         return;
       }
 
-      const [err, roomHostKey, code] = await roomService.getHostKey(roomId);
-      if (err) {
-        console.error(
-          `Error getting hostkey for room: ${roomId}: ${err.message}`,
-        );
-        res
-          .status(code)
-          .json({ error: `redis failde to get hostkey: ${err.message}` });
-        return;
-      }
+      const roomHostKey = await roomService.getHostKey(roomId);
 
       if (hostKey !== roomHostKey) {
         res.status(403).json({ error: "invalid host key" });
