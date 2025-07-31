@@ -2,10 +2,6 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 import express from "express";
 import request from "supertest";
 import { createHostRouter } from "../../routes/hostRoutes";
-import type SocketService from "../../config/SocketService";
-import type RoomService from "../../config/RoomService";
-import type NomineeService from "../../config/NomineeService";
-import type UserRoomService from "../../config/UserRoomService";
 import type { CreateVerifyHostMiddleware } from "../../middleware/verifyHost";
 
 // Mock services
@@ -16,20 +12,20 @@ const createMockSocketService = () => ({
 });
 
 const createMockRoomService = () => ({
-  createRoom: mock(async () => [null, 201]),
-  getHostKey: mock(async () => [null, "test-host-key", 200]),
-  setVoting: mock(async () => [null, 200]),
-  setDone: mock(async () => [null, 200]),
+  createRoom: mock(async () => {}),
+  getHostKey: mock(async () => "test-host-key"),
+  setVoting: mock(async () => {}),
+  setDone: mock(async () => {}),
 });
 
 const createMockNomineeService = () => ({
-  setNomineeCount: mock(async () => [null, 200]),
-  addNominee: mock(async () => [null, 200]),
-  tallyVotes: mock(async () => [null, "winner1", 200]),
+  setNomineeCount: mock(async () => {}),
+  addNominee: mock(async () => {}),
+  tallyVotes: mock(async () => "winner1"),
 });
 
 const createMockUserRoomService = () => ({
-  enrollUser: mock(async () => [null, 200]),
+  enrollUser: mock(async () => {}),
 });
 
 const createMockVerifyHostMiddleware: CreateVerifyHostMiddleware = (
@@ -167,12 +163,7 @@ describe("Host Routes", () => {
 
   describe("POST /rooms/:roomId/setDone", () => {
     it("should set the room state to done successfully and find winner", async () => {
-      (mockNomineeService.tallyVotes as any).mockResolvedValueOnce([
-        null,
-        "winner1",
-        200,
-      ]);
-      (mockRoomService.setDone as any).mockResolvedValueOnce([null, 200]);
+      (mockNomineeService.tallyVotes as any).mockResolvedValueOnce("winner1");
       const response = await request(app)
         .post("/rooms/room123/setDone")
         .send({ hostKey: "test-host-key" });
