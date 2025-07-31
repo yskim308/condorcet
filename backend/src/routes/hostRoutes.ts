@@ -6,8 +6,6 @@ import type { CreateVerifyHostMiddleware } from "../middleware/verifyHost";
 import { randomBytes } from "crypto";
 import type SocketService from "../config/SocketService";
 import type { RoomData, RoomState } from "../types/room";
-import findWinner from "../util/findWinner";
-import type { NomineeMap } from "../types/nominee";
 
 export const createHostRouter = (
   socketService: SocketService,
