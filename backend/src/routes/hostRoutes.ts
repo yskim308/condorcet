@@ -22,7 +22,11 @@ export const createHostRouter = (
   }
   router.post(
     "/rooms/create",
-    async (req: express.Request, res: express.Response) => {
+    async (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
       try {
         const { roomName, userName }: createBody = req.body;
 
@@ -41,39 +45,11 @@ export const createHostRouter = (
           hostKey: hostKey,
         };
 
-        const [err1, code1] = await roomService.createRoom(roomId, roomData);
-        if (err1) {
-          console.error(`Error creating room ${roomId}: ${err1.message}`);
-          res
-            .status(code1)
-            .json({ error: `redis failed to create room: ${err1.message}` });
-          return;
-        }
+        await roomService.createRoom(roomId, roomData);
 
-        const [err2, code2] = await userRoomService.enrollUser(
-          roomId,
-          userName,
-        );
-        if (err2) {
-          console.error(
-            `Error enrolling user ${userName} in room ${roomId}: ${err2.message}`,
-          );
-          res
-            .status(code2)
-            .json({ error: `redis failed to enroll user: ${err2.message}` });
-          return;
-        }
+        await userRoomService.enrollUser(roomId, userName);
 
-        const [err3, code3] = await nomineeService.setNomineeCount(roomId);
-        if (err3) {
-          console.error(
-            `Error setting nominee count for room ${roomId}: ${err3.message}`,
-          );
-          res.status(code3).json({
-            error: `redis failed to initialize nominee count: ${err3.message}`,
-          });
-          return;
-        }
+        await nomineeService.setNomineeCount(roomId);
         res.status(201).json({
           roomId: roomId,
           roomName: roomName,
@@ -82,9 +58,7 @@ export const createHostRouter = (
         });
         return;
       } catch (error) {
-        console.error("Error creating room:", error);
-        res.status(500).json({ error: "Failed to create room" });
-        return;
+        next(error);
       }
     },
   );
@@ -95,7 +69,11 @@ export const createHostRouter = (
   router.post(
     "/rooms/:roomId/nomination",
     verifyHost,
-    async (req: express.Request, res: express.Response) => {
+    async (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
       try {
         const { roomId } = req.params;
         const { nominee }: nominationBody = req.body;
@@ -105,14 +83,7 @@ export const createHostRouter = (
           return;
         }
 
-        const [err, code] = await nomineeService.addNominee(roomId, nominee);
-        if (err) {
-          res
-            .status(code)
-            .json({ error: `redis failed to add nominee: ${err.message}` });
-          return;
-        }
-
+        await nomineeService.addNominee(roomId, nominee);
         socketService.emitNewNomination(roomId, nominee);
 
         res.status(200).json({
@@ -121,9 +92,7 @@ export const createHostRouter = (
         });
         return;
       } catch (error) {
-        console.error("Error adding nominee:", error);
-        res.status(500).json({ error: "Failed to add nominee" });
-        return;
+        next(error);
       }
     },
   );
@@ -131,51 +100,34 @@ export const createHostRouter = (
   router.post(
     "/rooms/:roomId/setVoting",
     verifyHost,
-    async (req: express.Request, res: express.Response) => {
+    async (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
       try {
         const { roomId } = req.params;
-        const [err, code] = await roomService.setVoting(roomId);
-        if (err) {
-          res
-            .status(code)
-            .json({ error: `couldn't set state to voting: ${err.message}` });
-          return;
-        }
+        await roomService.setVoting(roomId);
         socketService.emitStateChange(roomId, "voting");
         res.status(200).json({
           message: "room set to voting succesfully",
         });
-      } catch (error) {
-        console.error("error setting room to ");
-        res.status(500).json({ error: "Failed to set state to voting" });
-        return;
-      }
+      } catch (error) {}
     },
   );
 
   router.post(
     "/rooms/:roomId/setDone",
     verifyHost,
-    async (req: express.Request, res: express.Response) => {
+    async (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
       try {
         const { roomId } = req.params;
-        const [winErr, winner, winCode] =
-          await nomineeService.tallyVotes(roomId);
-        if (winErr) {
-          res.status(winCode).json({
-            error: `error finding winner: ${winErr.message}`,
-          });
-          return;
-        }
-
-        const [err, code] = await roomService.setDone(roomId);
-        if (err) {
-          res
-            .status(code)
-            .json({ error: `couldn't set room to done: ${err.message}` });
-          return;
-        }
-
+        const winner = await nomineeService.tallyVotes(roomId);
+        await roomService.setDone(roomId);
         socketService.emitStateChange(roomId, "done");
         socketService.emitWinner(roomId, winner);
         res.status(200).json({
@@ -183,9 +135,7 @@ export const createHostRouter = (
           winner: winner,
         });
       } catch (error) {
-        console.error("Error in setDone route:", error);
-        res.status(500).json({ error: "Failed to set state to done" });
-        return;
+        next(error);
       }
     },
   );
