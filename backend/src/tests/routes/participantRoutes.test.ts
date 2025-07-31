@@ -8,100 +8,47 @@ import type NomineeService from "../../config/NomineeService";
 import type UserRoomService from "../../config/UserRoomService";
 
 // Mock services
-const mockSocketService: Partial<SocketService> = {
+const createMockSocketService = () => ({
   emitNewUser: mock(() => {}),
   emitNewVote: mock(() => {}),
-};
+});
 
-const mockRoomService: Partial<RoomService> = {
-  exists: mock(
-    async (): Promise<[Error | null, boolean, number]> => [null, true, 200],
-  ),
-  getState: mock(
-    async (): Promise<[Error | null, string, number]> => [
-      null,
-      "nominating",
-      200,
-    ],
-  ),
-  getHostKey: mock(
-    async (): Promise<[Error | null, string, number]> => [
-      null,
-      "test-host-key",
-      200,
-    ],
-  ),
-};
+const createMockRoomService = () => ({
+  exists: mock(async () => true),
+  getState: mock(async () => "nominating"),
+  getHostKey: mock(async (): Promise<string> => "test-host-key"),
+});
 
-const mockNomineeService: Partial<NomineeService> = {
-  saveVote: mock(async (): Promise<[Error | null, number]> => [null, 200]),
-  getAllNominees: mock(
-    async (): Promise<[Error | null, string[], number]> => [
-      null,
-      ["nominee1", "nominee2"],
-      200,
-    ],
-  ),
-  getWinner: mock(
-    async (): Promise<[Error | null, string, number]> => [null, "nominee1", 200],
-  ),
-};
+const createMockNomineeService = () => ({
+  saveVote: mock(async () => {}),
+  getAllNominees: mock(async () => ["nominee1", "nominee2"]),
+  getWinner: mock(async () => "nominee1"),
+});
 
-const mockUserRoomService: Partial<UserRoomService> = {
-  enrollUser: mock(async (): Promise<[Error | null, number]> => [null, 200]),
-  getUsers: mock(
-    async (): Promise<[Error | null, string[], number]> => [
-      null,
-      ["user1", "user2"],
-      200,
-    ],
-  ),
-  checkUserVoted: mock(
-    async (): Promise<[Error | null, boolean, number]> => [null, false, 200],
-  ),
-  getRole: mock(
-    async (): Promise<[Error | null, string, number]> => [
-      null,
-      "participant",
-      200,
-    ],
-  ),
-  getVotedUsers: mock(
-    async (): Promise<[Error | null, string[], number]> => [
-      null,
-      ["user1"],
-      200,
-    ],
-  ),
-};
+const createMockUserRoomService = () => ({
+  enrollUser: mock(async () => {}),
+  getUsers: mock(async () => ["user1", "user2"]),
+  checkUserVoted: mock(async () => false),
+  getRole: mock(async () => "participant"),
+  getVotedUsers: mock(async () => ["user1"]),
+});
 
 describe("Participant Routes", () => {
   let app: express.Application;
-
+  let mockSocketService = createMockSocketService();
+  let mockUserRoomService = createMockUserRoomService();
+  let mockRoomService = createMockRoomService();
+  let mockNomineeService = createMockNomineeService();
   beforeEach(() => {
     app = express();
     app.use(express.json());
     const participantRouter = createParticipantRouter(
-      mockSocketService as SocketService,
-      mockUserRoomService as UserRoomService,
-      mockRoomService as RoomService,
-      mockNomineeService as NomineeService,
+      mockSocketService as any,
+      mockUserRoomService as any,
+      mockRoomService as any,
+      mockNomineeService as any,
     );
     app.use(participantRouter);
-
-    // Reset mocks
-    for (const key in mockSocketService) {
-      (mockSocketService[key as keyof SocketService] as any).mockClear();
-    }
-    for (const key in mockRoomService) {
-      (mockRoomService[key as keyof RoomService] as any).mockClear();
-    }
-    for (const key in mockNomineeService) {
-      (mockNomineeService[key as keyof NomineeService] as any).mockClear();
-    }
-    for (const key in mockUserRoomService) {
-      (mockUserRoomService[key as keyof UserRoomService] as any).mockClear();
-    }
   });
 
   describe("POST /room/join", () => {
@@ -135,7 +82,7 @@ describe("Participant Routes", () => {
     });
 
     it("should return 404 if room does not exist", async () => {
-      (mockRoomService.exists as any).mockResolvedValueOnce([null, false, 404]);
+      (mockRoomService.exists as any).mockResolvedValueOnce(false);
       const response = await request(app).post("/room/join").send({
         roomId: "room123",
         userName: "user1",
@@ -179,29 +126,6 @@ describe("Participant Routes", () => {
 
   describe("POST /room/:roomId/getRoomData", () => {
     it("should return all room data successfully", async () => {
-      // Mocks
-      (mockRoomService.exists as any).mockResolvedValueOnce([null, true, 200]);
-      (mockUserRoomService.getRole as any).mockResolvedValueOnce([
-        null,
-        "participant",
-        200,
-      ]);
-      (mockUserRoomService.getUsers as any).mockResolvedValueOnce([
-        null,
-        ["user1", "user2"],
-        200,
-      ]);
-      (mockRoomService.getState as any).mockResolvedValueOnce([
-        null,
-        "nominating",
-        200,
-      ]);
-      (mockNomineeService.getAllNominees as any).mockResolvedValueOnce([
-        null,
-        ["nominee1", "nominee2"],
-        200,
-      ]);
-
       const response = await request(app)
         .post("/room/room123/getRoomData")
         .send({ userName: "user1" });
@@ -216,7 +140,7 @@ describe("Participant Routes", () => {
     });
 
     it("should return an error if the room does not exist", async () => {
-      (mockRoomService.exists as any).mockResolvedValueOnce([null, false, 404]);
+      (mockRoomService.exists as any).mockResolvedValueOnce(false);
       const response = await request(app)
         .post("/room/room123/getRoomData")
         .send({ userName: "user1" });
@@ -224,16 +148,7 @@ describe("Participant Routes", () => {
     });
 
     it("should return voted users if state is 'voting'", async () => {
-      (mockRoomService.getState as any).mockResolvedValueOnce([
-        null,
-        "voting",
-        200,
-      ]);
-      (mockUserRoomService.getVotedUsers as any).mockResolvedValueOnce([
-        null,
-        ["user1"],
-        200,
-      ]);
+      (mockRoomService.getState as any).mockResolvedValueOnce("voting");
       const response = await request(app)
         .post("/room/room123/getRoomData")
         .send({ userName: "user1" });
@@ -242,16 +157,7 @@ describe("Participant Routes", () => {
     });
 
     it("should return winner if state is 'done'", async () => {
-      (mockRoomService.getState as any).mockResolvedValueOnce([
-        null,
-        "done",
-        200,
-      ]);
-      (mockNomineeService.getWinner as any).mockResolvedValueOnce([
-        null,
-        "nominee1",
-        200,
-      ]);
+      (mockRoomService.getState as any).mockResolvedValueOnce("done");
       const response = await request(app)
         .post("/room/room123/getRoomData")
         .send({ userName: "user1" });
@@ -260,4 +166,3 @@ describe("Participant Routes", () => {
     });
   });
 });
-
