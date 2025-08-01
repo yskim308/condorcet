@@ -46,32 +46,36 @@ describe("ChatService", () => {
         exampleMessage.userName,
         exampleMessage.message,
       );
-      expect(mockRedisClient.lPush).toHaveBeenCalledWith(
-        exampleRoom,
-        JSON.stringify(exampleMessage),
-      );
+
+      expect(mockRedisClient.lPush).toHaveBeenCalledTimes(1);
+      const [key, messageDataString] = mockRedisClient.lPush.mock.calls[0];
+      const messageData = JSON.parse(messageDataString);
+
+      expect(key).toBe(`$room:${exampleRoom}:messages`);
+      expect(messageData.userName).toBe(exampleMessage.userName);
+      expect(messageData.message).toBe(exampleMessage.message);
     });
 
     it("should handle empty roomId", async () => {
       expect(
-        await chatService.sendMessage(
+        chatService.sendMessage(
           "",
           exampleMessage.userName,
           exampleMessage.message,
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow("roomId cannot be empty");
     });
 
     it("should handle empty userNames", async () => {
       expect(
-        await chatService.sendMessage(exampleRoom, "", exampleMessage.message),
-      ).rejects.toThrow();
+        chatService.sendMessage(exampleRoom, "", exampleMessage.message),
+      ).rejects.toThrow("userName cannot be empty");
     });
 
     it("should handle empty messages", async () => {
       expect(
-        await chatService.sendMessage(exampleRoom, exampleMessage.userName, ""),
-      ).rejects.toThrow();
+        chatService.sendMessage(exampleRoom, exampleMessage.userName, ""),
+      ).rejects.toThrow("message cannot be empty");
     });
   });
 });
