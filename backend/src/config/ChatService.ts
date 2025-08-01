@@ -11,13 +11,13 @@ export default class ChatService {
   async sendMessage(roomId: string, userName: string, message: string) {
     const key = `$room:${roomId}:messages`;
     if (!roomId || roomId.trim() === "") {
-      throw new Error("room id cannot be empty");
+      throw new Error("roomId cannot be empty");
     }
     if (!userName || userName.trim() === "") {
       throw new Error("userName cannot be empty");
     }
     if (!message) {
-      throw new Error("message cannot be empty either");
+      throw new Error("message cannot be empty");
     }
 
     const messageObject: Message = { userName, message };
