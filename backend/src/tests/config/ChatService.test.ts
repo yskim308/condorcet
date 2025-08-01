@@ -27,6 +27,7 @@ const createMockRedisCLient = () => ({
   lRange: mock(async (key: string, start: number, stop: number) =>
     messageObjectList.map((message) => JSON.stringify(message)),
   ),
+  expire: mock(async (key: string, ttl: number) => {}),
 });
 
 describe("ChatService", () => {
