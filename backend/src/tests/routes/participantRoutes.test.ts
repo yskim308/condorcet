@@ -2,10 +2,6 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 import express from "express";
 import request from "supertest";
 import { createParticipantRouter } from "../../routes/participantRoutes";
-import type SocketService from "../../config/SocketService";
-import type RoomService from "../../config/RoomService";
-import type NomineeService from "../../config/NomineeService";
-import type UserRoomService from "../../config/UserRoomService";
 
 // Mock services
 const createMockSocketService = () => ({
