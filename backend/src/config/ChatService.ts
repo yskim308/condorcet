@@ -27,6 +27,9 @@ export default class ChatService {
   }
 
   async getAllMessages(roomId: string): Promise<Message[]> {
+    if (!roomId || roomId.trim() === "") {
+      throw new Error("roomId cannot be empty");
+    }
     const key = `room:${roomId}:messages`;
     const messageStringList = await this.redisClient.lRange(key, 0, -1);
     return messageStringList.map(
