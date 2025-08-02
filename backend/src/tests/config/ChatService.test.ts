@@ -78,4 +78,17 @@ describe("ChatService", () => {
       ).rejects.toThrow("message cannot be empty");
     });
   });
+
+  describe("getMessages", () => {
+    it("should get all messages succesfully", async () => {
+      const messages = await chatService.getAllMessages(exampleRoom);
+      expect(messages).toEqual(messageObjectList);
+    });
+
+    it("should throw an error if roomId is empty", async () => {
+      expect(chatService.getAllMessages("")).rejects.toThrow(
+        "roomId cannot be empty",
+      );
+    });
+  });
 });
