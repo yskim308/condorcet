@@ -5,7 +5,7 @@ import type UserRoomService from "../config/UserRoomService";
 import type { CreateVerifyHostMiddleware } from "../middleware/verifyHost";
 import { randomBytes } from "crypto";
 import type SocketService from "../config/SocketService";
-import type { RoomData, RoomState } from "../types/room";
+import type { RoomData } from "../types/room";
 
 export const createHostRouter = (
   socketService: SocketService,
