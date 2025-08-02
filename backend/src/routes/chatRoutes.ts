@@ -39,6 +39,7 @@ export const createChatRouter = (
       try {
         const { roomId } = req.params;
         const { userName, message }: SendMessageBody = req.body;
+        socketSerivce.emitNewMessage(roomId, userName, message);
         await chatService.sendMessage(roomId, userName, message);
         res
           .status(200)
