@@ -62,3 +62,5 @@ app.use(globalErrorHandler);
 server.listen(port, () => {
   console.log(`lisetning on port: ${port}`);
 });
+
+export default server;
