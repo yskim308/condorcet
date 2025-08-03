@@ -1,9 +1,10 @@
 import { createClient, type RedisClientType } from "redis";
 
-export const redisClient: RedisClientType = createClient({
-  url: "redis://redis:6379",
-});
-
-if (process.env.NODE_ENV !== "test") {
-  redisClient.connect();
-}
+const createRedisClient = (): RedisClientType => {
+  const isTest = process.env.NODE_ENV === "test";
+  return createClient({
+    url: "redis://redis:6379",
+    database: isTest ? 1 : 0,
+  });
+};
+export const redisClient: RedisClientType = createRedisClient();
