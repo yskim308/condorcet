@@ -18,7 +18,7 @@ import globalErrorHandler from "./middleware/globalErrorHandler";
 
 const app = express();
 const server = createServer(app);
-const port = process.env.PORT;
+const port = process.env.NODE_ENV === "test" ? 1000 : process.env.PORT;
 if (!port) {
   throw new Error("port not defined in secrets");
 }
