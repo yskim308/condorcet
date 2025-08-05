@@ -7,4 +7,7 @@ const createRedisClient = (): RedisClientType => {
     database: isTest ? 1 : 0,
   });
 };
-export const redisClient: RedisClientType = createRedisClient();
+const redisClient: RedisClientType = createRedisClient();
+redisClient.connect();
+
+export { redisClient };
