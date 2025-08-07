@@ -7,6 +7,11 @@ import { io } from "socket.io-client";
 const roomName = "room-name";
 const nominations = ["candidate 1", "candidate 2", "candidate 3"];
 const users = ["host", "user1", "user2"];
+const votes = [
+  ["0", "1", "2"],
+  ["0", "2", "1"],
+  ["1", "0", "2"],
+];
 
 describe("Full API integration test", () => {
   let roomId: string;
@@ -65,6 +70,17 @@ describe("Full API integration test", () => {
         });
       expect(response.status).toBe(200);
       expect(response.body.nominee).toBe(nomination);
+    }
+  });
+
+  it("should let users vote succesfully", async () => {
+    for (let i = 0; i < users.length; i++) {
+      const response = await request(server).post(`/room/${roomId}/vote`).send({
+        vote: votes[i],
+        userName: users[i],
+      });
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe("vote saved");
     }
   });
 });
