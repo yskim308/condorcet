@@ -112,7 +112,9 @@ export const createHostRouter = (
         res.status(200).json({
           message: "room set to voting succesfully",
         });
-      } catch (error) {}
+      } catch (error) {
+        next(error);
+      }
     },
   );
 

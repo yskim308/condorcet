@@ -8,12 +8,11 @@ const roomName = "room-name";
 const nominations = ["candidate 1", "candidate 2", "candidate 3"];
 const users = ["host", "user1", "user2"];
 
-describe("Full integration test", () => {
+describe("Full API integration test", () => {
   let roomId: string;
   let hostKey: string;
   beforeAll(async () => {
     redisClient.FLUSHDB();
-    const socket = io();
   });
 
   it("should create room succesfully", async () => {
@@ -34,8 +33,8 @@ describe("Full integration test", () => {
   });
 
   it("should let users join a room", async () => {
-    users.forEach(async (user) => {
-      const response = await request(server).post("/rooms/join").send({
+    for (const user of users) {
+      const response = await request(server).post("/room/join").send({
         roomId: roomId,
         userName: user,
       });
@@ -43,6 +42,16 @@ describe("Full integration test", () => {
       expect(response.body.message).toBeDefined();
       expect(response.body.roomId).toBe(roomId);
       expect(response.body.userName).toBe(user);
-    });
+    }
+  });
+
+  it("should move to nomination succesfully", async () => {
+    const response = await request(server)
+      .post(`/rooms/${roomId}/setVoting`)
+      .send({
+        hostKey: hostKey,
+      });
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe("room set to voting succesfully");
   });
 });
