@@ -83,4 +83,14 @@ describe("Full API integration test", () => {
       expect(response.body.message).toBe("vote saved");
     }
   });
+
+  it("should move to 'done' stage succesfully", async () => {
+    const response = await request(server)
+      .post(`/rooms/${roomId}/setDone`)
+      .send({
+        hostKey: hostKey,
+      });
+    expect(response.status).toBe(200);
+    expect(response.body.winner).toBe(nominations[0]);
+  });
 });
