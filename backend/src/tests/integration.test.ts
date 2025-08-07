@@ -21,7 +21,7 @@ describe("Full integration test", () => {
       roomName: roomName,
       userName: users[0],
     });
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(201);
     ({ roomId, hostKey } = response.body);
 
     expect(response.body.roomName).toBe(roomName);
