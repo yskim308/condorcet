@@ -32,4 +32,17 @@ describe("Full integration test", () => {
     console.log("created room with id: " + roomId);
     console.log("hostkey is: " + hostKey);
   });
+
+  it("should let users join a room", async () => {
+    users.forEach(async (user) => {
+      const response = await request(server).post("/rooms/join").send({
+        roomId: roomId,
+        userName: user,
+      });
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBeDefined();
+      expect(response.body.roomId).toBe(roomId);
+      expect(response.body.userName).toBe(user);
+    });
+  });
 });
