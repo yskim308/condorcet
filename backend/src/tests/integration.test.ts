@@ -54,4 +54,17 @@ describe("Full API integration test", () => {
     expect(response.status).toBe(200);
     expect(response.body.message).toBe("room set to voting succesfully");
   });
+
+  it("should nominate the candidates succesfully", async () => {
+    for (const nomination of nominations) {
+      const response = await request(server)
+        .post(`/rooms/${roomId}/nomination`)
+        .send({
+          hostKey: hostKey,
+          nominee: nomination,
+        });
+      expect(response.status).toBe(200);
+      expect(response.body.nominee).toBe(nomination);
+    }
+  });
 });
