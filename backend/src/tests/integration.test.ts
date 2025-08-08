@@ -93,4 +93,18 @@ describe("Full API integration test", () => {
     expect(response.status).toBe(200);
     expect(response.body.winner).toBe(nominations[0]);
   });
+
+  it("should get room info succesfully after done", async () => {
+    const response = await request(server)
+      .post(`/room/${roomId}/getRoomData`)
+      .send({
+        userName: users[1],
+      });
+    expect(response.status).toBe(200);
+    expect(response.body.role).toBe("user");
+    expect(response.body.users).toEqual(users);
+    expect(response.body.state).toBe("done");
+    expect(Object.values(response.body.nominations)).toEqual(nominations);
+    expect(response.body.winner).toBe(nominations[0]);
+  });
 });
