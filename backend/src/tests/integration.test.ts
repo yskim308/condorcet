@@ -2,7 +2,6 @@ import { describe, it, afterAll, beforeAll, expect } from "bun:test";
 import { redisClient } from "../config/redisClient";
 import request from "supertest";
 import server from "../index";
-import { io } from "socket.io-client";
 
 const roomName = "room-name";
 const nominations = ["candidate 1", "candidate 2", "candidate 3"];
