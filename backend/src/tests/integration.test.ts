@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, beforeAll, expect } from "bun:test";
+import { describe, it, afterAll, beforeAll, expect } from "bun:test";
 import { redisClient } from "../config/redisClient";
 import request from "supertest";
 import server from "../index";
@@ -17,6 +17,9 @@ describe("Full API integration test", () => {
   let roomId: string;
   let hostKey: string;
   beforeAll(async () => {
+    redisClient.FLUSHDB();
+  });
+  afterAll(async () => {
     redisClient.FLUSHDB();
   });
 
