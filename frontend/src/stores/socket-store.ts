@@ -44,4 +44,6 @@ export const useSocketStore = create<SocketState>((set) => ({
   addVotedUser: (user: string) =>
     set((state) => ({ votedUsers: [...state.votedUsers, user] })),
   setMessages: (messages: string[]) => set({ messages: messages }),
+  addMessage: (message: string) =>
+    set((state) => ({ messages: { ...state.messages, message } })),
 }));
