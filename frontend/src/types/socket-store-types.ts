@@ -22,4 +22,5 @@ export interface SocketState {
   setVotedUsers: (users: string[]) => void;
   addVotedUser: (user: string) => void;
   setMessages: (messages: Message[]) => void;
+  addMessage: (message: Message) => void;
 }
