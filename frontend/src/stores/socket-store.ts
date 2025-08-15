@@ -1,25 +1,5 @@
 import { create } from "zustand";
-
-interface SocketState {
-  isConnected: boolean;
-  nominations: string[];
-  users: string[];
-  state: string;
-  votedUsers: string[];
-  winner?: string;
-  messages: string[];
-
-  connect: () => void;
-  disconnect: () => void;
-  setNominations: (nominations: string[]) => void;
-  addNominee: (nominee: string) => void;
-  setUsers: (users: string[]) => void;
-  addUser: (user: string) => void;
-  setState: (state: string) => void;
-  setVotedUsers: (users: string[]) => void;
-  addVotedUser: (user: string) => void;
-  setMessages: (messages: string[]) => void;
-}
+import type { SocketState, Message } from "@/types/socket-store-types";
 
 export const useSocketStore = create<SocketState>((set) => ({
   isConnected: false,
@@ -43,7 +23,7 @@ export const useSocketStore = create<SocketState>((set) => ({
   setVotedUsers: (users: string[]) => set({ votedUsers: users }),
   addVotedUser: (user: string) =>
     set((state) => ({ votedUsers: [...state.votedUsers, user] })),
-  setMessages: (messages: string[]) => set({ messages: messages }),
-  addMessage: (message: string) =>
+  setMessages: (messages: Message[]) => set({ messages: messages }),
+  addMessage: (message: Message) =>
     set((state) => ({ messages: { ...state.messages, message } })),
 }));
