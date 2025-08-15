@@ -14,13 +14,20 @@ export interface SocketState {
 
   connect: () => void;
   disconnect: () => void;
+
   setNominations: (nominations: string[]) => void;
   addNominee: (nominee: string) => void;
+
   setUsers: (users: string[]) => void;
   addUser: (user: string) => void;
+
   setState: (state: string) => void;
+
   setVotedUsers: (users: string[]) => void;
   addVotedUser: (user: string) => void;
+
   setMessages: (messages: Message[]) => void;
   addMessage: (message: Message) => void;
+
+  setWinner: (winner: string) => void;
 }
