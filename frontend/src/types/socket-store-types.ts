@@ -10,7 +10,7 @@ export interface SocketState {
   state: string;
   votedUsers: string[];
   winner?: string;
-  messages: string[];
+  messages: Message[];
 
   connect: () => void;
   disconnect: () => void;
@@ -21,5 +21,5 @@ export interface SocketState {
   setState: (state: string) => void;
   setVotedUsers: (users: string[]) => void;
   addVotedUser: (user: string) => void;
-  setMessages: (messages: string[]) => void;
+  setMessages: (messages: Message[]) => void;
 }
