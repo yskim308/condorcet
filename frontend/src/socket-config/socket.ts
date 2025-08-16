@@ -7,7 +7,7 @@ if (!backendURL) {
 interface ServerToClientEvents {
   "new-nomination": (payload: { nominee: string; roomId: string }) => void;
   "state-change": (payload: { state: string; roomId: string }) => void;
-  "new-user": (payload: { state: string; roomId: string }) => void;
+  "new-user": (payload: { userName: string; roomId: string }) => void;
   "user-voted": (payload: { userName: string }) => void;
   "new-message": (payload: { userName: string; message: string }) => void;
   winner: (winner: string) => void;
