@@ -13,9 +13,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="w-full h-full bg-primary">
       <SocketManager>
-        <body>{children}</body>
+        <body className="w-full h-full">{children}</body>
       </SocketManager>
     </html>
   );
