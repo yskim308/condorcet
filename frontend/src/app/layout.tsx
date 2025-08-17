@@ -14,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="w-full h-full bg-primary">
-      <body className="w-full h-full">
+    <html lang="en" className="h-full w-full" suppressHydrationWarning>
+      <body className="w-full h-full bg-primary">
         <ThemeProvider>
           <SocketManager>{children}</SocketManager>
         </ThemeProvider>
