@@ -15,8 +15,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full w-full" suppressHydrationWarning>
-      <body className="w-full h-full bg-primary">
-        <ThemeProvider>
+      <body className="w-full h-full bg-background">
+        <ThemeProvider attribute="class" defaultTheme="system">
           <SocketManager>{children}</SocketManager>
         </ThemeProvider>
       </body>
