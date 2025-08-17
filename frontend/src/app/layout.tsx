@@ -15,11 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="w-full h-full bg-primary">
-      <SocketManager>
+      <body className="w-full h-full">
         <ThemeProvider>
-          <body className="w-full h-full">{children}</body>
+          <SocketManager>{children}</SocketManager>
         </ThemeProvider>
-      </SocketManager>
+      </body>
     </html>
   );
 }
