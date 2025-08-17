@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import SocketManager from "@/components/socket-manager";
 import "./globals.css";
+import { ThemeProvider } from "next-themes";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="w-full h-full bg-primary">
       <SocketManager>
-        <body className="w-full h-full">{children}</body>
+        <ThemeProvider>
+          <body className="w-full h-full">{children}</body>
+        </ThemeProvider>
       </SocketManager>
     </html>
   );
