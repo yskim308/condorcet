@@ -28,8 +28,7 @@ export default function Home() {
       return;
     }
     try {
-      // setting room name to empty string...
-      // its required in the route but not actually used anywhere
+      // create room
       const response: CreateReponseBody = await axios.post(
         `${backendBase}/rooms/create`,
         {
@@ -40,6 +39,12 @@ export default function Home() {
       const { roomId, hostKey } = response;
       localStorage.setItem("hostKey", hostKey);
       localStorage.setItem("userName", userName);
+
+      // join room
+      await axios.post(`${backendBase}/room/join`, {
+        roomId: roomId,
+        userName: localStorage.getItem("userName"),
+      });
       router.push(`/rooms/${roomId}`);
     } catch (e) {
       toast.error("server error ccreaitng room");
