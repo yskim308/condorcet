@@ -24,7 +24,8 @@ export default function Home() {
 
   const handleSubmit = async () => {
     if (!userName) {
-      toast.error("name is required motherfucker");
+      toast.error("name cannot be empty!");
+      return;
     }
     try {
       // setting room name to empty string...
@@ -42,6 +43,31 @@ export default function Home() {
       router.push(`/rooms/${roomId}`);
     } catch (e) {
       toast.error("server error ccreaitng room");
+    }
+  };
+
+  const handleJoin = async () => {
+    if (!userName) {
+      toast.error("name cannot be empty!");
+      return;
+    }
+    if (!roomCode) {
+      toast.error("roomCode cannot be empty!");
+      return;
+    }
+    try {
+      await axios.post(`${backendBase}/room/join`, {
+        roomId: roomCode,
+        userName: userName,
+      });
+      localStorage.setItem("userName", userName);
+    } catch (e) {
+      if (axios.isAxiosError(e) && e.response) {
+        console.log(e.response.data);
+        toast.error("error: " + e.response.data.message);
+      } else {
+        toast.error("network error, try again");
+      }
     }
   };
 
@@ -70,7 +96,7 @@ export default function Home() {
             placeholder="Room Code"
           />
           <div className="flex flex-col items-center mt-5">
-            <Button variant="outline" className="mb-5">
+            <Button variant="outline" className="mb-5" onClick={handleJoin}>
               Join
             </Button>
             <div className="flex items-center w-full">
