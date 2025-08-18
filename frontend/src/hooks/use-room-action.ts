@@ -6,14 +6,19 @@ import type {
 } from "@/lib/room-service";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
-function onCreateSucces(hostKey: string, userName: string) {
+const router = useRouter();
+
+function onCreateSucces(hostKey: string, userName: string, roomId: string) {
   localStorage.setItem("hostKey", hostKey);
   localStorage.setItem("userName", userName);
+  router.push(`/rooms/${roomId}`);
 }
 
-function onJoinSuccess(userName: string) {
+function onJoinSuccess(userName: string, roomId: string) {
   localStorage.setItem("userName", userName);
+  router.push(`/rooms/${roomId}`);
 }
 
 function onError(action: "join" | "create", error: unknown) {
@@ -30,9 +35,9 @@ export default function useRoomState() {
   const createMutation = useMutation({
     mutationFn: createRoom,
     onSuccess: (data: CreateRoomReponse, variables: CreateRoomPayload, _) => {
-      const { hostKey } = data;
+      const { hostKey, roomId } = data;
       const { userName } = variables;
-      onCreateSucces(hostKey, userName);
+      onCreateSucces(hostKey, userName, roomId);
     },
     onError: (error, _, __) => {
       onError("create", error);
@@ -42,8 +47,8 @@ export default function useRoomState() {
   const joinMutation = useMutation({
     mutationFn: joinRoom,
     onSuccess: (__, variables: JoinRoomPayload, _) => {
-      const { userName } = variables;
-      onJoinSuccess(userName);
+      const { userName, roomId } = variables;
+      onJoinSuccess(userName, roomId);
     },
     onError: (error, _, __) => {
       onError("join", error);
