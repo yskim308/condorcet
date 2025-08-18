@@ -1,79 +1,44 @@
 "use client";
-import axios from "axios";
 import { toast } from "sonner";
 import { ChangeEvent, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useRouter } from "next/navigation";
-
-interface CreateReponseBody {
-  roomId: string;
-  hostKey: string;
-}
+import useRoomActions from "@/hooks/use-room-action";
 
 export default function Home() {
   const [userName, setUserName] = useState<string>("");
   const [roomCode, setRoomCOde] = useState<string>("");
 
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL;
-  if (!backendBase) throw new Error("backend URL not set in .env IDIOT");
+  const roomActions = useRoomActions();
 
-  const router = useRouter();
-
-  const handleSubmit = async () => {
-    if (!userName) {
-      toast.error("name cannot be empty!");
-      return;
+  const validate = (action: "join" | "create") => {
+    if (!userName.trim()) {
+      toast.error("username cannot be empty");
+      return false;
     }
-    try {
-      // create room
-      const response: CreateReponseBody = await axios.post(
-        `${backendBase}/rooms/create`,
-        {
-          roomName: "",
-          userName: userName,
-        },
-      );
-      const { roomId, hostKey } = response;
-      localStorage.setItem("hostKey", hostKey);
-      localStorage.setItem("userName", userName);
-
-      // join room
-      await axios.post(`${backendBase}/room/join`, {
-        roomId: roomId,
-        userName: localStorage.getItem("userName"),
-      });
-      router.push(`/rooms/${roomId}`);
-    } catch (e) {
-      toast.error("server error ccreaitng room");
+    if (action === "join" && !roomCode.trim()) {
+      toast.error("room code cannot be empty when joining room");
+      return false;
     }
+    return true;
   };
 
-  const handleJoin = async () => {
-    if (!userName) {
-      toast.error("name cannot be empty!");
-      return;
-    }
-    if (!roomCode) {
-      toast.error("roomCode cannot be empty!");
-      return;
-    }
-    try {
-      await axios.post(`${backendBase}/room/join`, {
-        roomId: roomCode,
-        userName: userName,
-      });
-      localStorage.setItem("userName", userName);
-    } catch (e) {
-      if (axios.isAxiosError(e) && e.response) {
-        console.log(e.response.data);
-        toast.error("error: " + e.response.data.message);
-      } else {
-        toast.error("network error, try again");
-      }
-    }
+  const handleCreate = () => {
+    if (!validate("create")) return;
+    roomActions.handleCreateRoom({
+      roomName: "",
+      userName: userName,
+    });
+  };
+
+  const handleJoin = () => {
+    if (!validate("join")) return;
+    roomActions.handleJoinRoom({
+      roomId: roomCode,
+      userName: userName,
+    });
   };
 
   return (
@@ -109,7 +74,7 @@ export default function Home() {
               <span>or</span>
               <Separator className="flex-1" />
             </div>
-            <Button className="mt-5" onClick={handleSubmit}>
+            <Button className="mt-5" onClick={handleCreate}>
               Create
             </Button>
           </div>
