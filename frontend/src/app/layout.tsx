@@ -19,7 +19,7 @@ export default function RootLayout({
       <body className="w-full h-full bg-background">
         <ThemeProvider attribute="class" defaultTheme="system">
           <SocketManager>{children}</SocketManager>
-          <Toaster />
+          <Toaster richColors position="top-center" />
         </ThemeProvider>
       </body>
     </html>
