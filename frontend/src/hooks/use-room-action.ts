@@ -8,30 +8,35 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-const router = useRouter();
-
-function onCreateSucces(hostKey: string, userName: string, roomId: string) {
-  localStorage.setItem("hostKey", hostKey);
-  localStorage.setItem("userName", userName);
-  router.push(`/rooms/${roomId}`);
-}
-
-function onJoinSuccess(userName: string, roomId: string) {
-  localStorage.setItem("userName", userName);
-  router.push(`/rooms/${roomId}`);
-}
-
-function onError(action: "join" | "create", error: unknown) {
-  let errorMessage = "error while trying to ";
-  action === "join" ? errorMessage + "join room" : errorMessage + "create room";
-  if (error instanceof Error) {
-    toast.error(errorMessage + error.message);
-    return;
-  }
-  toast.error(errorMessage);
-}
-
 export default function useRoomActions() {
+  const router = useRouter();
+
+  const onCreateSucces = (
+    hostKey: string,
+    userName: string,
+    roomId: string,
+  ) => {
+    localStorage.setItem("hostKey", hostKey);
+    localStorage.setItem("userName", userName);
+    router.push(`/rooms/${roomId}`);
+  };
+
+  const onJoinSuccess = (userName: string, roomId: string) => {
+    localStorage.setItem("userName", userName);
+    router.push(`/rooms/${roomId}`);
+  };
+
+  const onError = (action: "join" | "create", error: unknown) => {
+    let errorMessage = "error while trying to ";
+    action === "join"
+      ? errorMessage + "join room"
+      : errorMessage + "create room";
+    if (error instanceof Error) {
+      toast.error(errorMessage + error.message);
+      return;
+    }
+    toast.error(errorMessage);
+  };
   const createMutation = useMutation({
     mutationFn: createRoom,
     onSuccess: (data: CreateRoomReponse, variables: CreateRoomPayload, _) => {
