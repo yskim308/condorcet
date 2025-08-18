@@ -6,9 +6,45 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { useRouter } from "next/navigation";
+
+interface CreateReponseBody {
+  roomId: string;
+  hostKey: string;
+}
+
 export default function Home() {
   const [userName, setUserName] = useState<string>("");
   const [roomCode, setRoomCOde] = useState<string>("");
+
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL;
+  if (!backendBase) throw new Error("backend URL not set in .env IDIOT");
+
+  const router = useRouter();
+
+  const handleSubmit = async () => {
+    if (!userName) {
+      toast.error("name is required motherfucker");
+    }
+    try {
+      // setting room name to empty string...
+      // its required in the route but not actually used anywhere
+      const response: CreateReponseBody = await axios.post(
+        `${backendBase}/rooms/create`,
+        {
+          roomName: "",
+          userName: userName,
+        },
+      );
+      const { roomId, hostKey } = response;
+      localStorage.setItem("hostKey", hostKey);
+      localStorage.setItem("userName", userName);
+      router.push(`/rooms/${roomId}`);
+    } catch (e) {
+      toast.error("server error ccreaitng room");
+    }
+  };
+
   return (
     <div className="h-full w-full flex justify-center items-center text-primary">
       <div className="w-4/5 md:w-1/3 flex flex-col rounded-3xl border-2">
@@ -42,7 +78,9 @@ export default function Home() {
               <span>or</span>
               <Separator className="flex-1" />
             </div>
-            <Button className="mt-5">Create</Button>
+            <Button className="mt-5" onClick={handleSubmit}>
+              Create
+            </Button>
           </div>
         </div>
       </div>
