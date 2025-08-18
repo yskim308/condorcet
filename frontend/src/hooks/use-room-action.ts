@@ -31,7 +31,7 @@ function onError(action: "join" | "create", error: unknown) {
   toast.error(errorMessage);
 }
 
-export default function useRoomState() {
+export default function useRoomActions() {
   const createMutation = useMutation({
     mutationFn: createRoom,
     onSuccess: (data: CreateRoomReponse, variables: CreateRoomPayload, _) => {
