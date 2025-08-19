@@ -25,7 +25,7 @@ export default function ChatContainer({ roomId }: ChatContainerProps) {
     <div>
       <h1>chat header</h1>
       {socketStore.messages.map((message) => (
-        <ChatMessage {...message} />
+        <ChatMessage message={message} />
       ))}
       <ChatInput />
     </div>

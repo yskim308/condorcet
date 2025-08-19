@@ -1,6 +1,10 @@
 import type { Message } from "@/types/socket-store-types";
 
-export default function ChatMessage(message: Message) {
+interface ChatMessageProps {
+  message: Message;
+}
+
+export default function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className="flex flex-col">
       <div>Username: {message.userName}</div>
