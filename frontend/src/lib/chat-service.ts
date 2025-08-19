@@ -22,10 +22,7 @@ export const sendMessage = async ({
   });
 };
 
-export interface GetAllMessagesPayload {
-  roomId: string;
-}
-export const getALlMessages = async ({ roomId }: GetAllMessagesPayload) => {
+export const getALlMessages = async (roomId: string) => {
   const response = await axios.get<Message[]>(
     `${backendBase}/rooms/${roomId}/message/getAll`,
   );

@@ -4,7 +4,6 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { ChangeEvent, useState } from "react";
 import { useParams } from "next/navigation";
-import { toast } from "sonner";
 
 interface ChatInputProps {
   userName: string;

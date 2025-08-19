@@ -16,6 +16,7 @@ export default function RoomPage() {
   const roleStore = useRoleStore();
 
   useEffect(() => {
+    console.log(roomId);
     const userName = localStorage.getItem("userName");
     if (!userName) {
       router.push("/?error=user_does_not_exist");
