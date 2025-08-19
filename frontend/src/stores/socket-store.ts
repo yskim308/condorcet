@@ -30,7 +30,7 @@ export const useSocketStore = create<SocketState>((set) => ({
 
   setMessages: (messages: Message[]) => set({ messages: messages }),
   addMessage: (message: Message) =>
-    set((state) => ({ messages: { ...state.messages, message } })),
+    set((state) => ({ messages: [...state.messages, message] })),
 
   setWinner: (winner: string) => set({ winner: winner }),
 }));
