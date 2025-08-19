@@ -13,15 +13,11 @@ export default function Providers({
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <html lang="en" className="h-full w-full" suppressHydrationWarning>
-      <body className="w-full h-full bg-background">
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider attribute="class" defaultTheme="system">
-            <SocketManager>{children}</SocketManager>
-            <Toaster richColors position="top-center" />
-          </ThemeProvider>
-        </QueryClientProvider>
-      </body>
-    </html>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system">
+        <SocketManager>{children}</SocketManager>
+        <Toaster richColors position="top-center" />
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
