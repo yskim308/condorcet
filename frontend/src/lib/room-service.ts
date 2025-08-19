@@ -27,27 +27,13 @@ export interface JoinRoomPayload {
 export const createRoom = async (
   payload: CreateRoomPayload,
 ): Promise<CreateRoomReponse> => {
-  try {
-    const response = await apiClient.post<CreateRoomReponse>(
-      "/rooms/create",
-      payload,
-    );
-    return response.data;
-  } catch (e) {
-    if (axios.isAxiosError(e) && e.response) {
-      throw new Error(e.response.data.message || "failed to create room");
-    }
-    throw new Error("network error while creaitng room");
-  }
+  const response = await apiClient.post<CreateRoomReponse>(
+    "/rooms/create",
+    payload,
+  );
+  return response.data;
 };
 
 export const joinRoom = async (payload: JoinRoomPayload): Promise<void> => {
-  try {
-    await apiClient.post("/room/join", payload);
-  } catch (e) {
-    if (axios.isAxiosError(e) && e.response) {
-      throw new Error(e.response.data.message || "failed to join room");
-    }
-    throw new Error("network error while joining room");
-  }
+  await apiClient.post("/room/join", payload);
 };
