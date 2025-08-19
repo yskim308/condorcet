@@ -8,8 +8,12 @@ import { useEffect } from "react";
 
 interface ChatContainerProps {
   roomId: string;
+  userName: string;
 }
-export default function ChatContainer({ roomId }: ChatContainerProps) {
+export default function ChatContainer({
+  roomId,
+  userName,
+}: ChatContainerProps) {
   const messageQuery = useQuery({
     queryKey: ["messages", roomId],
     queryFn: () => getALlMessages(roomId),
@@ -27,7 +31,7 @@ export default function ChatContainer({ roomId }: ChatContainerProps) {
       {socketStore.messages.map((message) => (
         <ChatMessage message={message} />
       ))}
-      <ChatInput />
+      <ChatInput userName={userName} />
     </div>
   );
 }

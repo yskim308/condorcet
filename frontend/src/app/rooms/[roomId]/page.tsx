@@ -50,7 +50,7 @@ export default function RoomPage() {
   return (
     <>
       <h1>hello world</h1>
-      <ChatContainer roomId={roomId as string} />
+      <ChatContainer roomId={roomId as string} userName={userName} />
     </>
   );
 }
