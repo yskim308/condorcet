@@ -1,9 +1,26 @@
+"use client";
 import { useSocketStore } from "@/stores/socket-store";
 import ChatMessage from "./chat-message";
 import ChatInput from "./chat-input";
+import { useQuery } from "@tanstack/react-query";
+import { getALlMessages } from "@/lib/chat-service";
+import { useEffect } from "react";
 
-export default function ChatContainer() {
+interface ChatContainerProps {
+  roomId: string;
+}
+export default function ChatContainer({ roomId }: ChatContainerProps) {
+  const messageQuery = useQuery({
+    queryKey: ["messages", roomId],
+    queryFn: () => getALlMessages(roomId),
+  });
   const socketStore = useSocketStore();
+
+  useEffect(() => {
+    if (!messageQuery.isSuccess || !messageQuery.data) return;
+    socketStore.setMessages(messageQuery.data);
+  }, [messageQuery.isSuccess, messageQuery.data]);
+
   return (
     <div>
       <h1>chat header</h1>
