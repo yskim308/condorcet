@@ -12,9 +12,14 @@ export default function RoomPage() {
   const socketStore = useSocketStore();
   const roleStore = useRoleStore();
 
+  const userName = localStorage.getItem("userName");
+  if (!userName) {
+    router.push("/?error=user_does_not_exist");
+    return;
+  }
   const query = useQuery({
     queryKey: ["room", roomId],
-    queryFn: () => fetchRoomData(roomId as string),
+    queryFn: () => fetchRoomData(roomId as string, userName),
   });
 
   useEffect(() => {
@@ -29,6 +34,7 @@ export default function RoomPage() {
 
   if (query.isError) {
     router.push("/?error=room_not_found");
+    return;
   }
   if (query.isPending) {
     return <h1>loading...</h1>;

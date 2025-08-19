@@ -9,11 +9,17 @@ interface RoomData {
   winner?: string;
 }
 
-export async function fetchRoomData(roomId: string): Promise<RoomData> {
+export async function fetchRoomData(
+  roomId: string,
+  userName: string,
+): Promise<RoomData> {
   const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL;
   if (!backendBase) throw new Error("NEXT_PUBLIC_BACKEND_URL not set in .env");
   const response = await axios.post<RoomData>(
-    `${backendBase}/${roomId}/getRoomdData`,
+    `${backendBase}/room/${roomId}/getRoomData`,
+    {
+      userName,
+    },
   );
   return response.data;
 }

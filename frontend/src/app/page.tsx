@@ -28,7 +28,7 @@ export default function Home() {
   const handleCreate = () => {
     if (!validate("create")) return;
     roomActions.handleCreateRoom({
-      roomName: "",
+      roomName: "temp",
       userName: userName,
     });
   };
