@@ -30,7 +30,7 @@ export default function RoomPage() {
     socketStore.setNominations(query.data.nominations);
     query.data?.votedUsers && socketStore.setVotedUsers(query.data.votedUsers);
     query.data?.winner && socketStore.setWinner(query.data.winner);
-  });
+  }, [query.isSuccess, query.data]);
 
   if (query.isError) {
     router.push("/?error=room_not_found");
