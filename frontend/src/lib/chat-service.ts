@@ -6,14 +6,26 @@ if (!backendBase) {
   throw new Error("NEXT_PUBLIC_BACKEND_BASE not set in .env");
 }
 
-export const sendMessage = async (roomId: string, message: Message) => {
+export interface SendMessagePayload {
+  roomId: string;
+  userName: string;
+  message: string;
+}
+export const sendMessage = async ({
+  roomId,
+  userName,
+  message,
+}: SendMessagePayload) => {
   await axios.post(`${backendBase}/rooms/${roomId}/message/sendMessage`, {
-    userName: message.userName,
-    message: message.message,
+    userName: userName,
+    message: message,
   });
 };
 
-export const getALlMessages = async (roomId: string) => {
+export interface GetAllMessagesPayload {
+  roomId: string;
+}
+export const getALlMessages = async ({ roomId }: GetAllMessagesPayload) => {
   const response = await axios.get<Message[]>(
     `${backendBase}/rooms/${roomId}/message/getAll`,
   );
