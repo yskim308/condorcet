@@ -2,7 +2,7 @@
 import useChatActions from "@/hooks/use-chat-actions";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { useParams } from "next/navigation";
 
 interface ChatInputProps {
@@ -13,6 +13,11 @@ export default function ChatInput({ userName }: ChatInputProps) {
   const [input, setInput] = useState<string>("");
   const { roomId } = useParams();
   const { handleSendMessage, isLoading } = useChatActions();
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
   const handleSubmit = () => {
     handleSendMessage({
       roomId: roomId as string,
@@ -24,7 +29,7 @@ export default function ChatInput({ userName }: ChatInputProps) {
 
   return (
     <>
-      <Input />
+      <Input onChange={handleInputChange} />
       <Button type="button" onClick={handleSubmit}>
         Submit
       </Button>
