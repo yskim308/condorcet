@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 export default function useRoomActions() {
   const router = useRouter();
 
-  const onCreateSucces = (
+  const onCreateSuccess = (
     hostKey: string,
     userName: string,
     roomId: string,
@@ -42,7 +42,7 @@ export default function useRoomActions() {
     onSuccess: (data: CreateRoomReponse, variables: CreateRoomPayload, _) => {
       const { hostKey, roomId } = data;
       const { userName } = variables;
-      onCreateSucces(hostKey, userName, roomId);
+      onCreateSuccess(hostKey, userName, roomId);
     },
     onError: (error, _, __) => {
       onError("create", error);
