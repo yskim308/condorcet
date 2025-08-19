@@ -1,3 +1,4 @@
+import socket from "@/socket-config/socket";
 import axios from "axios";
 
 const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -36,4 +37,5 @@ export const createRoom = async (
 
 export const joinRoom = async (payload: JoinRoomPayload): Promise<void> => {
   await apiClient.post("/room/join", payload);
+  socket.emit("join-room", payload.roomId);
 };
