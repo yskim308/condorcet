@@ -1,30 +1,38 @@
-import { redirect } from "next/navigation";
+"use client";
+import { useParams, useRouter } from "next/navigation";
+import { fetchRoomData } from "@/lib/data-fetch";
+import { useQuery } from "@tanstack/react-query";
+import { useSocketStore } from "@/stores/socket-store";
+import { useEffect } from "react";
+import { useRoleStore } from "@/stores/role-store";
 
-export default async function RoomPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const roomId = await params;
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL;
-  if (!backendBase) throw new Error("NEXT_PUBLIC_BACKEND_URL not set in .env");
+export default function RoomPage() {
+  const { roomId } = useParams();
+  const router = useRouter();
+  const socketStore = useSocketStore();
+  const roleStore = useRoleStore();
 
-  const userName = localStorage.getItem("userName");
-  const response = await fetch(`${backendBase}/room/${roomId}/getRoomData`, {
-    method: "POST",
-    headers: {
-      "Content-type": "application/json",
-    },
-    body: JSON.stringify({
-      userName,
-    }),
+  const query = useQuery({
+    queryKey: ["room", roomId],
+    queryFn: () => fetchRoomData(roomId as string),
   });
 
-  if (!response.ok) {
-    redirect("/");
-  }
+  useEffect(() => {
+    if (!query.isSuccess || !query.data) return;
+    if (query.data.role === "host") roleStore.setHost();
+    socketStore.setUsers(query.data.users);
+    socketStore.setState(query.data.state);
+    socketStore.setNominations(query.data.nominations);
+    query.data?.votedUsers && socketStore.setVotedUsers(query.data.votedUsers);
+    query.data?.winner && socketStore.setWinner(query.data.winner);
+  });
 
-  const roomData = await response.json();
+  if (query.isError) {
+    router.push("/?error=room_not_found");
+  }
+  if (query.isPending) {
+    return <h1>loading...</h1>;
+  }
 
   return <h1>hello</h1>;
 }

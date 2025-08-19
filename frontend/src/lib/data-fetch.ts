@@ -6,10 +6,10 @@ interface RoomData {
   state: string;
   nominations: string[];
   votedUsers?: string[];
-  winner: string;
+  winner?: string;
 }
 
-export async function fetchRoomData(roomId: string): Promise<RoomData | void> {
+export async function fetchRoomData(roomId: string): Promise<RoomData> {
   const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL;
   if (!backendBase) throw new Error("NEXT_PUBLIC_BACKEND_URL not set in .env");
   const response = await axios.post<RoomData>(
