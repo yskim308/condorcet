@@ -35,6 +35,16 @@ export default function SocketManager({
     socket.on("winner", (payload: string) => {
       socketStore.setWinner(payload);
     });
+
+    return () => {
+      socket.off("connect");
+      socket.off("new-nomination");
+      socket.off("state-change");
+      socket.off("new-user");
+      socket.off("user-voted");
+      socket.off("new-message");
+      socket.off("winner");
+    };
   }, []);
   return <>{children}</>;
 }
