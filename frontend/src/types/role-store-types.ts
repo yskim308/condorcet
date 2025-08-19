@@ -1,5 +1,5 @@
 export interface RoleStore {
-  role: "user" | "host";
+  isHost: boolean;
 
-  setRole: (role: "user" | "host") => void;
+  setHost: () => void;
 }
