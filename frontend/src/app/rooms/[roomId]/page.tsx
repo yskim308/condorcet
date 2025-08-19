@@ -5,18 +5,24 @@ import { useQuery } from "@tanstack/react-query";
 import { useSocketStore } from "@/stores/socket-store";
 import { useEffect } from "react";
 import { useRoleStore } from "@/stores/role-store";
+import { useState } from "react";
 
 export default function RoomPage() {
   const { roomId } = useParams();
+  const [userName, setUserName] = useState<string>("");
   const router = useRouter();
   const socketStore = useSocketStore();
   const roleStore = useRoleStore();
 
-  const userName = localStorage.getItem("userName");
-  if (!userName) {
-    router.push("/?error=user_does_not_exist");
-    return;
-  }
+  useEffect(() => {
+    const userName = localStorage.getItem("userName");
+    if (!userName) {
+      router.push("/?error=user_does_not_exist");
+      return;
+    }
+    setUserName(userName);
+  }, []);
+
   const query = useQuery({
     queryKey: ["room", roomId],
     queryFn: () => fetchRoomData(roomId as string, userName),
