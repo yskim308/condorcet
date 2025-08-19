@@ -6,6 +6,7 @@ import { useSocketStore } from "@/stores/socket-store";
 import { useEffect } from "react";
 import { useRoleStore } from "@/stores/role-store";
 import { useState } from "react";
+import ChatContainer from "@/components/chat/chat-container";
 
 export default function RoomPage() {
   const { roomId } = useParams();
@@ -46,5 +47,10 @@ export default function RoomPage() {
     return <h1>loading...</h1>;
   }
 
-  return <h1>hello</h1>;
+  return (
+    <>
+      <h1>hello world</h1>
+      <ChatContainer />
+    </>
+  );
 }
