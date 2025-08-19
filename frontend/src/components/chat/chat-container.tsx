@@ -18,17 +18,17 @@ export default function ChatContainer({
     queryKey: ["messages", roomId],
     queryFn: () => getALlMessages(roomId),
   });
-  const socketStore = useSocketStore();
+  const { setMessages, messages } = useSocketStore();
 
   useEffect(() => {
     if (!messageQuery.isSuccess || !messageQuery.data) return;
-    socketStore.setMessages(messageQuery.data);
+    setMessages(messageQuery.data);
   }, [messageQuery.isSuccess, messageQuery.data]);
 
   return (
     <div>
       <h1>chat header</h1>
-      {socketStore.messages.map((message) => (
+      {messages.map((message) => (
         <ChatMessage message={message} />
       ))}
       <ChatInput userName={userName} />
