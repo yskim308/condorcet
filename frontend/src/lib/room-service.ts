@@ -32,6 +32,7 @@ export const createRoom = async (
     "/rooms/create",
     payload,
   );
+  socket.emit("join-room", response.data.roomId);
   return response.data;
 };
 
