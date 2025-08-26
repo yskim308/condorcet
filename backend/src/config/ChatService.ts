@@ -22,7 +22,7 @@ export default class ChatService {
 
     const messageObject: Message = { userName, message };
     const messageString = JSON.stringify(messageObject);
-    await this.redisClient.lPush(key, messageString);
+    await this.redisClient.rPush(key, messageString);
     await this.redisClient.expire(key, TTL);
   }
 
