@@ -9,7 +9,7 @@ export default class ChatService {
   }
 
   async sendMessage(roomId: string, userName: string, message: string) {
-    const key = `$room:${roomId}:messages`;
+    const key = `room:${roomId}:messages`;
     if (!roomId || roomId.trim() === "") {
       throw new Error("roomId cannot be empty");
     }
