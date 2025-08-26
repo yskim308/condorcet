@@ -28,6 +28,7 @@ export default function RoomPage() {
   const query = useQuery({
     queryKey: ["room", roomId],
     queryFn: () => fetchRoomData(roomId as string, userName),
+    enabled: !!roomId && !!userName,
   });
 
   useEffect(() => {
@@ -50,7 +51,6 @@ export default function RoomPage() {
 
   return (
     <>
-      <h1>hello world</h1>
       <ChatContainer roomId={roomId as string} userName={userName} />
     </>
   );
