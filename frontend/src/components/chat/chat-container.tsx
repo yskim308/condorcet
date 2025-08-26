@@ -17,6 +17,9 @@ export default function ChatContainer({
   const messageQuery = useQuery({
     queryKey: ["messages", roomId],
     queryFn: () => getALlMessages(roomId),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
   const { setMessages, messages } = useSocketStore();
 
