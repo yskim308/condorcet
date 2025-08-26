@@ -28,8 +28,8 @@ export default function ChatContainer({
   return (
     <div>
       <h1>chat header</h1>
-      {messages.map((message) => (
-        <ChatMessage message={message} />
+      {messages.map((message, index) => (
+        <ChatMessage key={index} message={message} />
       ))}
       <ChatInput userName={userName} />
     </div>
