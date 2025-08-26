@@ -4,6 +4,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { ChangeEvent, useState } from "react";
 import { useParams } from "next/navigation";
+import { Send } from "lucide-react";
 
 interface ChatInputProps {
   userName: string;
@@ -28,11 +29,31 @@ export default function ChatInput({ userName }: ChatInputProps) {
     setInput("");
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   return (
     <>
-      <Input onChange={handleInputChange} value={input} />
-      <Button type="button" onClick={handleSubmit}>
-        Submit
+      <Input
+        onChange={handleInputChange}
+        value={input}
+        onKeyDown={handleKeyPress}
+        placeholder="Type your message..."
+        disabled={isLoading}
+        className="flex-1"
+      />
+      <Button
+        type="button"
+        onClick={handleSubmit}
+        disabled={!input.trim() || isLoading}
+        size="icon"
+        className="shrink-0"
+      >
+        <Send className="h-4 w-4" />
       </Button>
     </>
   );
