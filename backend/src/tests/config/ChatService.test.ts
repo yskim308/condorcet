@@ -23,7 +23,7 @@ const messageObjectList: Message[] = [
   },
 ];
 const createMockRedisCLient = () => ({
-  lPush: mock(async (key: string, message: string) => {}),
+  rPush: mock(async (key: string, message: string) => {}),
   lRange: mock(async (key: string, start: number, stop: number) =>
     messageObjectList.map((message) => JSON.stringify(message)),
   ),
@@ -47,11 +47,11 @@ describe("ChatService", () => {
         exampleMessage.message,
       );
 
-      expect(mockRedisClient.lPush).toHaveBeenCalledTimes(1);
-      const [key, messageDataString] = mockRedisClient.lPush.mock.calls[0];
+      expect(mockRedisClient.rPush).toHaveBeenCalledTimes(1);
+      const [key, messageDataString] = mockRedisClient.rPush.mock.calls[0];
       const messageData = JSON.parse(messageDataString);
 
-      expect(key).toBe(`$room:${exampleRoom}:messages`);
+      expect(key).toBe(`room:${exampleRoom}:messages`);
       expect(messageData.userName).toBe(exampleMessage.userName);
       expect(messageData.message).toBe(exampleMessage.message);
     });
