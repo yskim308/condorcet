@@ -5,6 +5,8 @@ import ChatInput from "./chat-input";
 import { useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useQuery } from "@tanstack/react-query";
+import { getALlMessages } from "@/lib/chat-service";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChatContainerProps {
@@ -16,14 +18,29 @@ export default function ChatContainer({
   roomId,
   userName,
 }: ChatContainerProps) {
-  const { messages } = useSocketStore();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { setMessages, messages } = useSocketStore();
+  const messageEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  const messageQuery = useQuery({
+    queryKey: ["messages", roomId],
+    queryFn: () => getALlMessages(roomId),
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const scrollToBottom = () => {
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // setting messages on send
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
+    if (!messageQuery.isSuccess || !messageQuery.data) return;
+    setMessages(messageQuery.data);
+  }, [messageQuery.isSuccess, messageQuery.data]);
+
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
 
   return (
@@ -36,7 +53,7 @@ export default function ChatContainer({
       </CardHeader>
 
       <CardContent className="flex-1 p-0">
-        <ScrollArea className="h-full max-h-[400px]" ref={scrollAreaRef}>
+        <ScrollArea className="h-full max-h-[400px]">
           <div className="space-y-1">
             {messages.length === 0 ? (
               <div className="flex items-center justify-center h-32 text-muted-foreground">
@@ -49,6 +66,7 @@ export default function ChatContainer({
                 <ChatMessage key={index} message={message} />
               ))
             )}
+            <div ref={messageEndRef} />
           </div>
         </ScrollArea>
       </CardContent>
