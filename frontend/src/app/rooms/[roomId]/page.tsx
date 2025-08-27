@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { useRoleStore } from "@/stores/role-store";
 import { useState } from "react";
 import ChatContainer from "@/components/chat/chat-container";
+import NominationPage from "@/components/stage-pages/nomination-page";
 
 export default function RoomPage() {
   const { roomId } = useParams();
@@ -52,6 +53,7 @@ export default function RoomPage() {
   return (
     <>
       <ChatContainer roomId={roomId as string} userName={userName} />
+      {socketStore.state == "nominating" && <NominationPage />}
     </>
   );
 }
