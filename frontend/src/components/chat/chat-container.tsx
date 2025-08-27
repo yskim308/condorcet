@@ -8,18 +8,21 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { getALlMessages } from "@/lib/chat-service";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useRoomStore } from "@/stores/room-store";
 
 interface ChatContainerProps {
   roomId: string;
-  userName: string;
 }
 
-export default function ChatContainer({
-  roomId,
-  userName,
-}: ChatContainerProps) {
+export default function ChatContainer({ roomId }: ChatContainerProps) {
   const messages = useSocketStore((state) => state.messages);
   const setMessages = useSocketStore((state) => state.setMessages);
+  const userName = useRoomStore((state) => state.userName);
+
+  if (!userName) {
+    return;
+  }
+
   const messageEndRef = useRef<HTMLDivElement>(null);
 
   const messageQuery = useQuery({

@@ -13,21 +13,15 @@ export default function RoomPage() {
   const { roomId } = useParams();
   const userName = useRoomStore((state) => state.userName);
   const router = useRouter();
-  const { setUsers, setState, setNominations, setVotedUsers, setWinner } =
-    useSocketStore((state) => ({
-      setUsers: state.setUsers,
-      setState: state.setState,
-      setNominations: state.setNominations,
-      setVotedUsers: state.setVotedUsers,
-      setWinner: state.setWinner,
-    }));
   const state = useSocketStore((state) => state.state);
   const roleStore = useRoleStore();
 
-  if (!userName) {
-    router.push("/?error=user_does_not_exist");
-    return;
-  }
+  useEffect(() => {
+    if (!userName) {
+      router.push("/?error=user_does_not_exist");
+      return;
+    }
+  }, []);
 
   const query = useQuery({
     queryKey: ["room", roomId],
@@ -37,6 +31,9 @@ export default function RoomPage() {
 
   useEffect(() => {
     if (!query.isSuccess || !query.data) return;
+
+    const { setUsers, setState, setNominations, setVotedUsers, setWinner } =
+      useSocketStore.getState();
     if (query.data.role === "host") roleStore.setHost();
     setUsers(query.data.users);
     setState(query.data.state);
@@ -55,7 +52,7 @@ export default function RoomPage() {
 
   return (
     <>
-      <ChatContainer roomId={roomId as string} userName={userName} />
+      <ChatContainer roomId={roomId as string} />
       {state == "nominating" && <NominationPage />}
     </>
   );
