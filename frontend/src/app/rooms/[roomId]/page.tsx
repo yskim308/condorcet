@@ -42,10 +42,13 @@ export default function RoomPage() {
     query.data?.winner && setWinner(query.data.winner);
   }, [query.isSuccess, query.data]);
 
-  if (query.isError) {
-    router.push("/?error=room_not_found");
-    return;
-  }
+  useEffect(() => {
+    if (query.isError) {
+      router.push("/?error=room_not_found");
+      return;
+    }
+  }, [query.isError]);
+
   if (query.isPending) {
     return <h1>loading...</h1>;
   }
