@@ -20,7 +20,6 @@ export default function ChatContainer({
 }: ChatContainerProps) {
   const messages = useSocketStore((state) => state.messages);
   const setMessages = useSocketStore((state) => state.setMessages);
-
   const messageEndRef = useRef<HTMLDivElement>(null);
 
   const messageQuery = useQuery({

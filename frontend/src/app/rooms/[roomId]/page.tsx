@@ -3,43 +3,46 @@ import { useParams, useRouter } from "next/navigation";
 import { fetchRoomData } from "@/lib/data-fetch";
 import { useQuery } from "@tanstack/react-query";
 import { useSocketStore } from "@/stores/socket-store";
-import { useEffect } from "react";
 import { useRoleStore } from "@/stores/role-store";
-import { useState } from "react";
+import { useEffect } from "react";
 import ChatContainer from "@/components/chat/chat-container";
 import NominationPage from "@/components/stage-pages/nomination-page";
+import { useRoomStore } from "@/stores/room-store";
 
 export default function RoomPage() {
   const { roomId } = useParams();
-  const [userName, setUserName] = useState<string>("");
+  const userName = useRoomStore((state) => state.userName);
   const router = useRouter();
-  const socketStore = useSocketStore();
+  const { setUsers, setState, setNominations, setVotedUsers, setWinner } =
+    useSocketStore((state) => ({
+      setUsers: state.setUsers,
+      setState: state.setState,
+      setNominations: state.setNominations,
+      setVotedUsers: state.setVotedUsers,
+      setWinner: state.setWinner,
+    }));
+  const state = useSocketStore((state) => state.state);
   const roleStore = useRoleStore();
 
-  useEffect(() => {
-    console.log(roomId);
-    const userName = localStorage.getItem("userName");
-    if (!userName) {
-      router.push("/?error=user_does_not_exist");
-      return;
-    }
-    setUserName(userName);
-  }, []);
+  if (!userName) {
+    router.push("/?error=user_does_not_exist");
+    return;
+  }
 
   const query = useQuery({
     queryKey: ["room", roomId],
-    queryFn: () => fetchRoomData(roomId as string, userName),
+    queryFn: () => fetchRoomData(roomId as string, userName!),
     enabled: !!roomId && !!userName,
   });
 
   useEffect(() => {
     if (!query.isSuccess || !query.data) return;
     if (query.data.role === "host") roleStore.setHost();
-    socketStore.setUsers(query.data.users);
-    socketStore.setState(query.data.state);
-    socketStore.setNominations(query.data.nominations);
-    query.data?.votedUsers && socketStore.setVotedUsers(query.data.votedUsers);
-    query.data?.winner && socketStore.setWinner(query.data.winner);
+    setUsers(query.data.users);
+    setState(query.data.state);
+    setNominations(query.data.nominations);
+    query.data?.votedUsers && setVotedUsers(query.data.votedUsers);
+    query.data?.winner && setWinner(query.data.winner);
   }, [query.isSuccess, query.data]);
 
   if (query.isError) {
@@ -53,7 +56,7 @@ export default function RoomPage() {
   return (
     <>
       <ChatContainer roomId={roomId as string} userName={userName} />
-      {socketStore.state == "nominating" && <NominationPage />}
+      {state == "nominating" && <NominationPage />}
     </>
   );
 }
