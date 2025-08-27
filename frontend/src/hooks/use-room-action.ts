@@ -7,22 +7,27 @@ import type {
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useRoomStore } from "@/stores/room-store";
 
 export default function useRoomActions() {
   const router = useRouter();
+  const setUserName = useRoomStore((state) => state.setUserName);
+  const setHostKey = useRoomStore((state) => state.setHostKey);
+  const setRoomId = useRoomStore((state) => state.setRoomId);
 
   const onCreateSuccess = (
     hostKey: string,
     userName: string,
     roomId: string,
   ) => {
-    localStorage.setItem("hostKey", hostKey);
-    localStorage.setItem("userName", userName);
+    setHostKey(hostKey);
+    setUserName(userName);
     router.push(`/rooms/${roomId}`);
   };
 
   const onJoinSuccess = (userName: string, roomId: string) => {
-    localStorage.setItem("userName", userName);
+    setUserName(userName);
+    setRoomId(roomId);
     router.push(`/rooms/${roomId}`);
   };
 
