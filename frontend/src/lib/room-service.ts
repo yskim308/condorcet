@@ -1,10 +1,6 @@
 import socket from "@/socket-config/socket";
 import axios from "axios";
-
-const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL;
-if (!backendBase) {
-  throw new Error("NEXT_PUBLIC_BACKEND_BASE not set in .env");
-}
+import backendBase from "./backend-baseUrl";
 
 const apiClient = axios.create({
   baseURL: backendBase,

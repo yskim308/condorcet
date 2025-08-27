@@ -1,10 +1,6 @@
 import { Message } from "@/types/socket-store-types";
 import axios from "axios";
-
-const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL;
-if (!backendBase) {
-  throw new Error("NEXT_PUBLIC_BACKEND_BASE not set in .env");
-}
+import backendBase from "./backend-baseUrl";
 
 export interface SendMessagePayload {
   roomId: string;

@@ -1,9 +1,6 @@
 import { io, Socket } from "socket.io-client";
+import backendBase from "@/lib/backend-baseUrl";
 
-const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
-if (!backendURL) {
-  throw new Error("error, backend url not set in .env");
-}
 interface ServerToClientEvents {
   "new-nomination": (payload: { nominee: string; roomId: string }) => void;
   "state-change": (payload: { state: string; roomId: string }) => void;
@@ -17,6 +14,6 @@ interface ClientToServerEvents {
   "join-room": (roomId: string) => void;
 }
 const socket: Socket<ServerToClientEvents, ClientToServerEvents> =
-  io(backendURL);
+  io(backendBase);
 
 export default socket;
