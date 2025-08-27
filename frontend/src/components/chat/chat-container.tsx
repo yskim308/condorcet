@@ -18,7 +18,9 @@ export default function ChatContainer({
   roomId,
   userName,
 }: ChatContainerProps) {
-  const { setMessages, messages } = useSocketStore();
+  const messages = useSocketStore((state) => state.messages);
+  const setMessages = useSocketStore((state) => state.setMessages);
+
   const messageEndRef = useRef<HTMLDivElement>(null);
 
   const messageQuery = useQuery({
