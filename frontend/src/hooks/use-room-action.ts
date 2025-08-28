@@ -22,6 +22,7 @@ export default function useRoomActions() {
   ) => {
     setHostKey(hostKey);
     setUserName(userName);
+    setRoomId(roomId);
     router.push(`/rooms/${roomId}`);
   };
 
