@@ -4,7 +4,7 @@ import { fetchRoomData } from "@/lib/data-fetch";
 import { useQuery } from "@tanstack/react-query";
 import { useSocketStore } from "@/stores/socket-store";
 import { useRoleStore } from "@/stores/role-store";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ChatContainer from "@/components/chat/chat-container";
 import NominationPage from "@/components/stage-pages/nomination-page";
 import { useRoomStore } from "@/stores/room-store";
@@ -16,12 +16,19 @@ export default function RoomPage() {
   const state = useSocketStore((state) => state.state);
   const roleStore = useRoleStore();
 
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
+
   useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
     if (!userName) {
       router.push("/?error=user_does_not_exist");
       return;
     }
-  }, []);
+  }, [userName, isHydrated]);
 
   const query = useQuery({
     queryKey: ["room", roomId],
