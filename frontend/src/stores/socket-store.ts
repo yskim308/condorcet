@@ -1,9 +1,14 @@
 import { create } from "zustand";
-import type { SocketState, Message } from "@/types/socket-store-types";
+import type {
+  SocketState,
+  Message,
+  NominationsMap,
+} from "@/types/socket-store-types";
 
 export const useSocketStore = create<SocketState>((set) => ({
   isConnected: false,
-  nominations: [],
+  nominationMap: {},
+  nominationlist: [],
   users: [],
   state: "",
   votedUsers: [],
@@ -12,11 +17,18 @@ export const useSocketStore = create<SocketState>((set) => ({
   connect: () => set({ isConnected: true }),
   disconnect: () => set({ isConnected: false }),
 
-  setNominations: (nominations: string[]) => set({ nominations: nominations }),
-  addNominee: (nominee: string) =>
-    set((state) => ({
-      nominations: [...state.nominations, nominee],
-    })),
+  setNominationMap: (nominations: NominationsMap) => {
+    set({ nominationMap: nominations });
+  },
+
+  setNominationList: (nominations: NominationsMap) => {
+    const nominationArray = Object.values(nominations);
+    set({ nominationlist: nominationArray });
+  },
+
+  addToNominationList: (nominee: string) => {
+    set((state) => ({ nominationlist: [...state.nominationlist, nominee] }));
+  },
 
   setUsers: (users: string[]) => set({ users: users }),
   addUser: (user: string) =>

@@ -3,9 +3,14 @@ export interface Message {
   message: string;
 }
 
+export interface NominationsMap {
+  [key: number]: string;
+}
+
 export interface SocketState {
   isConnected: boolean;
-  nominations: string[];
+  nominationMap: NominationsMap;
+  nominationlist: string[];
   users: string[];
   state: string;
   votedUsers: string[];
@@ -15,8 +20,10 @@ export interface SocketState {
   connect: () => void;
   disconnect: () => void;
 
-  setNominations: (nominations: string[]) => void;
-  addNominee: (nominee: string) => void;
+  setNominationMap: (nominations: NominationsMap) => void;
+  setNominationList: () => void;
+
+  addToNominationList: (nominee: string) => void;
 
   setUsers: (users: string[]) => void;
   addUser: (user: string) => void;
