@@ -1,11 +1,12 @@
 import axios from "axios";
 import backendBase from "./backend-baseUrl";
+import { NominationsMap } from "@/types/socket-store-types";
 
 interface RoomData {
   role: string;
   users: string[];
   state: string;
-  nominations: string[];
+  nominations: NominationsMap;
   votedUsers?: string[];
   winner?: string;
 }
