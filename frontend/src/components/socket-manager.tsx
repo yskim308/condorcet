@@ -17,7 +17,7 @@ export default function SocketManager({
     socket.on(
       "new-nomination",
       (payload: { nominee: string; roomId: string }) => {
-        socketStore.addNominee(payload.nominee);
+        socketStore.addToNominationList(payload.nominee);
       },
     );
     socket.on("state-change", (payload: { state: string; roomId: string }) => {

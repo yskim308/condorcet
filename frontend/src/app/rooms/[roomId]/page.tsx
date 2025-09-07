@@ -39,12 +39,14 @@ export default function RoomPage() {
   useEffect(() => {
     if (!query.isSuccess || !query.data) return;
 
-    const { setUsers, setState, setNominations, setVotedUsers, setWinner } =
+    const { setUsers, setState, setNominationMap, setVotedUsers, setWinner } =
       useSocketStore.getState();
     if (query.data.role === "host") roleStore.setHost();
     setUsers(query.data.users);
     setState(query.data.state);
-    setNominations(query.data.nominations);
+    query.data.nominations
+      ? setNominationMap(query.data.nominations)
+      : setNominationMap({});
     query.data?.votedUsers && setVotedUsers(query.data.votedUsers);
     query.data?.winner && setWinner(query.data.winner);
   }, [query.isSuccess, query.data]);

@@ -21,7 +21,7 @@ export interface SocketState {
   disconnect: () => void;
 
   setNominationMap: (nominations: NominationsMap) => void;
-  setNominationList: () => void;
+  setNominationList: (nominations: NominationsMap) => void;
 
   addToNominationList: (nominee: string) => void;
 
