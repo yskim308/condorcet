@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import ChatContainer from "@/components/chat/chat-container";
 import NominationPage from "@/components/stage-pages/nomination-page";
 import { useRoomStore } from "@/stores/room-store";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function RoomPage() {
   const { roomId } = useParams();
@@ -74,8 +75,18 @@ export default function RoomPage() {
 
   return (
     <>
-      {state == "nominating" && <NominationPage />}
-      <ChatContainer roomId={roomId as string} />
+      <Tabs>
+        <TabsList>
+          <TabsTrigger value="voting-page">Voting Page</TabsTrigger>
+          <TabsTrigger value="chat">Chat</TabsTrigger>
+        </TabsList>
+        <TabsContent value="voting-page">
+          {state == "nominating" && <NominationPage />}
+        </TabsContent>
+        <TabsContent value="chat">
+          <ChatContainer roomId={roomId as string} />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
