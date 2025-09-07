@@ -12,6 +12,11 @@ export default function NominationPage() {
   return (
     <div className="container mx-auto p-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {isHost && (
+          <div className="mt-8">
+            <NominationControlPanel />
+          </div>
+        )}
         <div className="md:col-span-2">
           <NominationContainer nominations={nominations} />
         </div>
@@ -19,11 +24,6 @@ export default function NominationPage() {
           <UsersContainer users={users} />
         </div>
       </div>
-      {isHost && (
-        <div className="mt-8">
-          <NominationControlPanel />
-        </div>
-      )}
     </div>
   );
 }

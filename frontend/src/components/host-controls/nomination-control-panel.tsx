@@ -24,7 +24,7 @@ export default function NominationControlPanel() {
     useShallow((state) => ({
       hostKey: state.hostKey,
       roomId: state.roomId,
-    }))
+    })),
   );
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -54,10 +54,6 @@ export default function NominationControlPanel() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Host Controls</CardTitle>
-        <CardDescription>Manage nominations and start the vote.</CardDescription>
-      </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <label htmlFor="nominee-input" className="text-sm font-medium">
@@ -70,13 +66,18 @@ export default function NominationControlPanel() {
               onChange={handleInputChange}
               placeholder="Enter nominee name"
             />
-            <Button onClick={handleAddNomineeAndClear}>Add</Button>
+            <Button variant="secondary" onClick={handleAddNomineeAndClear}>
+              Add
+            </Button>
           </div>
         </div>
       </CardContent>
       <CardFooter>
-        <Button onClick={handleSetVotingClick} className="w-full">Start Vote</Button>
+        <Button onClick={handleSetVotingClick} className="w-full">
+          Start Vote
+        </Button>
       </CardFooter>
     </Card>
   );
 }
+
