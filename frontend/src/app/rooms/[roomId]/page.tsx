@@ -74,8 +74,8 @@ export default function RoomPage() {
 
   return (
     <>
-      <ChatContainer roomId={roomId as string} />
       {state == "nominating" && <NominationPage />}
+      <ChatContainer roomId={roomId as string} />
     </>
   );
 }
