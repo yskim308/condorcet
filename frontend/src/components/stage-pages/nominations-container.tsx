@@ -18,7 +18,12 @@ export default function NominationContainer({
           {nominations && nominations.length ? (
             <ul className="space-y-2">
               {nominations.map((nominee) => (
-                <li key={nominee} className="text-lg">{nominee}</li>
+                <li
+                  key={nominee}
+                  className="text-lg p-2 border-2 rounded-3xl text-center"
+                >
+                  {nominee}
+                </li>
               ))}
             </ul>
           ) : (
@@ -29,3 +34,4 @@ export default function NominationContainer({
     </Card>
   );
 }
+
