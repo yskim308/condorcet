@@ -35,8 +35,8 @@ export default function useRoomActions() {
   const onError = (action: "join" | "create", error: unknown) => {
     let errorMessage = "error while trying to ";
     action === "join"
-      ? errorMessage + "join room"
-      : errorMessage + "create room";
+      ? (errorMessage += "join room: ")
+      : (errorMessage += "create room: ");
     if (error instanceof Error) {
       toast.error(errorMessage + error.message);
       return;
