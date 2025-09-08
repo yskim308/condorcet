@@ -77,7 +77,7 @@ export default function RoomPage() {
   return (
     <>
       <Tabs defaultValue="voting-page" className="flex flex-col h-full">
-        <div className="flex flex-col items-center justify-center mt-5">
+        <div className="flex justify-center mt-5">
           <TabsList>
             <TabsTrigger value="voting-page">Voting Page</TabsTrigger>
             <TabsTrigger value="chat">Chat</TabsTrigger>
