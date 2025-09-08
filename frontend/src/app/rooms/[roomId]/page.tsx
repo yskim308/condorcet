@@ -9,6 +9,7 @@ import ChatContainer from "@/components/chat/chat-container";
 import NominationPage from "@/components/stage-pages/nomination-page";
 import { useRoomStore } from "@/stores/room-store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import RoomInfo from "@/components/room-info";
 
 export default function RoomPage() {
   const { roomId } = useParams();
@@ -76,11 +77,12 @@ export default function RoomPage() {
   return (
     <>
       <Tabs defaultValue="voting-page" className="flex flex-col h-full">
-        <div className="flex justify-center mt-5">
+        <div className="flex flex-col items-center justify-center mt-5">
           <TabsList>
             <TabsTrigger value="voting-page">Voting Page</TabsTrigger>
             <TabsTrigger value="chat">Chat</TabsTrigger>
           </TabsList>
+          <RoomInfo />
         </div>
         <TabsContent value="voting-page">
           {state == "nominating" && <NominationPage />}
