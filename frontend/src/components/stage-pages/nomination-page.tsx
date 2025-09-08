@@ -17,7 +17,7 @@ export default function NominationPage() {
             <NominationControlPanel />
           </div>
         )}
-        <div className="md:col">
+        <div className={!isHost ? "col-span-2" : ""}>
           <NominationContainer nominations={nominations} />
         </div>
         <div>
