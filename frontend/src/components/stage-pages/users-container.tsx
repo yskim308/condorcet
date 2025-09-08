@@ -12,11 +12,13 @@ export default function UsersContainer({ users }: UsersContainerProps) {
         <CardTitle>Users</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-48">
+        <ScrollArea className="h-48 lg:h-96">
           {users && users.length ? (
             <ul className="space-y-2">
-              {users.map((user) => (
-                <li key={user} className="text-lg">{user}</li>
+              {users.map((user, index) => (
+                <li key={index} className="text-lg">
+                  {user}
+                </li>
               ))}
             </ul>
           ) : (
@@ -27,3 +29,4 @@ export default function UsersContainer({ users }: UsersContainerProps) {
     </Card>
   );
 }
+

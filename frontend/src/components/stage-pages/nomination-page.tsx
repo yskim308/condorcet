@@ -13,11 +13,11 @@ export default function NominationPage() {
     <div className="container mx-auto p-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {isHost && (
-          <div className="mt-8">
+          <div>
             <NominationControlPanel />
           </div>
         )}
-        <div className="md:col-span-2">
+        <div className="md:col">
           <NominationContainer nominations={nominations} />
         </div>
         <div>

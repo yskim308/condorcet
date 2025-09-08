@@ -14,13 +14,14 @@ export default function NominationContainer({
         <CardTitle>Nominees</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-48">
+        <ScrollArea className="h-48 lg:h-96">
           {nominations && nominations.length ? (
             <ul className="space-y-2">
-              {nominations.map((nominee) => (
+              {nominations.map((nominee, index) => (
                 <li
-                  key={nominee}
-                  className="text-lg p-2 border-2 rounded-3xl text-center"
+                  key={index}
+                  className="text-lg p-2 border-2 rounded-3xl text-center
+                  hover:bg-muted hover:text-muted-foreground"
                 >
                   {nominee}
                 </li>
@@ -34,4 +35,3 @@ export default function NominationContainer({
     </Card>
   );
 }
-
