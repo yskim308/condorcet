@@ -43,7 +43,6 @@ export default function ChatInput({ userName }: ChatInputProps) {
         value={input}
         onKeyDown={handleKeyPress}
         placeholder="Type your message..."
-        disabled={isLoading}
         className="flex-1"
       />
       <Button
