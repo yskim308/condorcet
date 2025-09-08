@@ -88,7 +88,9 @@ export default function RoomPage() {
           {state == "nominating" && <NominationPage />}
         </TabsContent>
         <TabsContent value="chat" asChild>
-          <ChatContainer roomId={roomId as string} />
+          <div className="flex justify-center">
+            <ChatContainer roomId={roomId as string} />
+          </div>
         </TabsContent>
       </Tabs>
     </>

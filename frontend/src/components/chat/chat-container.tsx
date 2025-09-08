@@ -48,7 +48,7 @@ export default function ChatContainer({ roomId }: ChatContainerProps) {
   }, [messages]);
 
   return (
-    <Card className="p-5 flex flex-col h-full max-h-[600px] bg-background">
+    <Card className="m-5 flex flex-col h-full max-h-[600px] bg-background lg:w-1/2 lg:p-10">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold text-foreground">
           Chat
