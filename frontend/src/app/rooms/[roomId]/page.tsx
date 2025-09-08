@@ -75,11 +75,13 @@ export default function RoomPage() {
 
   return (
     <>
-      <Tabs>
-        <TabsList>
-          <TabsTrigger value="voting-page">Voting Page</TabsTrigger>
-          <TabsTrigger value="chat">Chat</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="voting-page">
+        <div className="flex justify-center mt-5">
+          <TabsList>
+            <TabsTrigger value="voting-page">Voting Page</TabsTrigger>
+            <TabsTrigger value="chat">Chat</TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent value="voting-page">
           {state == "nominating" && <NominationPage />}
         </TabsContent>
