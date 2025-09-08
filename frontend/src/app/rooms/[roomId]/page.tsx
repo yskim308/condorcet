@@ -10,6 +10,8 @@ import NominationPage from "@/components/stage-pages/nomination-page";
 import { useRoomStore } from "@/stores/room-store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RoomInfo from "@/components/room-info";
+import VotingPage from "@/components/stage-pages/voting-page";
+import DonePage from "@/components/stage-pages/done-page";
 
 export default function RoomPage() {
   const { roomId } = useParams();
@@ -85,7 +87,9 @@ export default function RoomPage() {
           <RoomInfo />
         </div>
         <TabsContent value="voting-page">
-          {state == "nominating" && <NominationPage />}
+          {state === "nominating" && <NominationPage />}
+          {state === "voting" && <VotingPage />}
+          {state === "done" && <DonePage />}
         </TabsContent>
         <TabsContent value="chat" asChild>
           <div className="flex justify-center">
