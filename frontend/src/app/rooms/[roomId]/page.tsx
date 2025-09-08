@@ -75,7 +75,7 @@ export default function RoomPage() {
 
   return (
     <>
-      <Tabs defaultValue="voting-page">
+      <Tabs defaultValue="voting-page" className="flex flex-col h-full">
         <div className="flex justify-center mt-5">
           <TabsList>
             <TabsTrigger value="voting-page">Voting Page</TabsTrigger>
@@ -85,7 +85,7 @@ export default function RoomPage() {
         <TabsContent value="voting-page">
           {state == "nominating" && <NominationPage />}
         </TabsContent>
-        <TabsContent value="chat">
+        <TabsContent value="chat" asChild>
           <ChatContainer roomId={roomId as string} />
         </TabsContent>
       </Tabs>
