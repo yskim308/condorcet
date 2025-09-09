@@ -25,7 +25,7 @@ export default function UsersContainer({ users }: UsersContainerProps) {
                   className="text-lg flex items-center justify-between"
                 >
                   <span>{user}</span>
-                  <div>
+                  <div className="flex">
                     <h1 className="text-sm mr-2 text-muted-foreground">
                       voted:{" "}
                     </h1>
