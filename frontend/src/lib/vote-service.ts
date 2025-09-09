@@ -36,3 +36,15 @@ export const setDone = async ({ roomId, hostKey }: SetDonePayload) => {
     hostKey: hostKey,
   });
 };
+
+export interface SendVotePayload {
+  userName: string;
+  roomId: string;
+  votes: string[];
+}
+export const sendote = async ({ votes, roomId, userName }: SendVotePayload) => {
+  await axios.post(`${backendBase}/room/${roomId}/vote`, {
+    vote: votes,
+    userName: userName,
+  });
+};
