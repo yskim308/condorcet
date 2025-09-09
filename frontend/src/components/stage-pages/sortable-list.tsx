@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -17,13 +17,45 @@ import { useSocketStore } from "@/stores/socket-store";
 import { ScrollArea } from "../ui/scroll-area";
 import SortableItem from "./sortable-item";
 import { Button } from "../ui/button";
+import { useRoomStore } from "@/stores/room-store";
+import { toast } from "sonner";
+import useVotingActions from "@/hooks/use-voting-actions";
 
 export default function SortableList() {
   const nominations = useSocketStore((state) => state.nominationMap);
+  const votedUsers = useSocketStore((state) => state.votedUsers);
+
+  const [userSubmitted, setUserSubmitted] = useState<boolean>(false);
+  const userName = useRoomStore((state) => state.userName);
+  const roomId = useRoomStore((state) => state.roomId);
 
   const [orderedNomineeIds, setOrderedNomineeIds] = useState<number[]>(() => {
     return Object.keys(nominations).map(Number);
   });
+
+  useEffect(() => {
+    if (!userName) {
+      toast.error("username is not set?");
+      return;
+    }
+    if (userName in votedUsers) {
+      setUserSubmitted(true);
+    }
+  }, [votedUsers]);
+
+  const { handleSendVote } = useVotingActions();
+  const handleSubmitClick = () => {
+    if (!userName || !roomId) {
+      toast.error("username or roomid not set");
+      return;
+    }
+    const votesAsStrings = orderedNomineeIds.map(String);
+    handleSendVote({
+      userName: userName,
+      roomId: roomId,
+      votes: votesAsStrings,
+    });
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -66,7 +98,9 @@ export default function SortableList() {
           </SortableContext>
         </DndContext>
       </ScrollArea>
-      <Button>Submit Vote</Button>
+      <Button onClick={handleSubmitClick} disabled={userSubmitted}>
+        Submit Vote
+      </Button>
     </div>
   );
 }
