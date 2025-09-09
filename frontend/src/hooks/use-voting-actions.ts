@@ -6,6 +6,8 @@ import {
   AddNomineePayload,
   SetVotingPayload,
   SetDonePayload,
+  sendVote,
+  SendVotePayload,
 } from "@/lib/vote-service";
 import { toast } from "sonner";
 
@@ -25,6 +27,19 @@ export default function useVotingActions() {
     }
     toast.error(errorMessage);
   };
+
+  const onSendVoteError = (error: unknown) => {
+    let errorMessage = "error while sending ballot:";
+    if (error instanceof Error) {
+      errorMessage += `: ${error.message}`;
+    }
+    toast.error(errorMessage);
+  };
+
+  const sendVoteMutation = useMutation({
+    mutationFn: sendVote,
+    onError: (error, _, __) => onSendVoteError(error),
+  });
 
   const addNomineeMutation = useMutation({
     mutationFn: addNominee,
@@ -47,5 +62,7 @@ export default function useVotingActions() {
     handleSetVoting: (payload: SetVotingPayload) =>
       setVotingMutation.mutate(payload),
     handleSetDone: (payload: SetDonePayload) => setDoneMutation.mutate(payload),
+    handleSendVote: (payload: SendVotePayload) =>
+      sendVoteMutation.mutate(payload),
   };
 }
