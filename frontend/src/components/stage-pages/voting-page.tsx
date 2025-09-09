@@ -15,6 +15,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useSocketStore } from "@/stores/socket-store";
 import { useRoleStore } from "@/stores/role-store";
+import { ScrollArea } from "../ui/scroll-area";
 import UsersContainer from "./users-container";
 import VotingControlPanel from "../host-controls/voting-control-panel";
 import SortableItem from "./sortable-item";
@@ -57,26 +58,28 @@ export default function VotingPage() {
           </div>
         )}
         <div className={!isHost ? "col-span-2" : ""}>
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold mb-4">Rank Nominees</h3>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={orderedNomineeIds}
-                strategy={verticalListSortingStrategy}
+          <div>
+            <ScrollArea className="h-48 lg:h-96">
+              <h3 className="text-md font-semibold mb-4">Rank Nominees</h3>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
               >
-                {orderedNomineeIds.map((nomineeId) => (
-                  <SortableItem
-                    key={nomineeId}
-                    id={nomineeId}
-                    name={nominations[nomineeId]}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
+                <SortableContext
+                  items={orderedNomineeIds}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {orderedNomineeIds.map((nomineeId) => (
+                    <SortableItem
+                      key={nomineeId}
+                      id={nomineeId}
+                      name={nominations[nomineeId]}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            </ScrollArea>
           </div>
         </div>
         <div>

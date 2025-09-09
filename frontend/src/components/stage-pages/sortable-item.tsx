@@ -20,9 +20,9 @@ export default function SortableItem({ id, name }: SortableItemProps) {
   return (
     <div ref={setNodeRef} style={style}>
       <Card className="mb-2">
-        <CardContent className="flex items-center p-4">
+        <CardContent className="flex items-center">
           <div
-            className="cursor-grab active:cursor-grabbing mr-3 text-gray-500 hover:text-gray-700"
+            className="cursor-grab active:cursor-grabbing mr-3 text-gray-500"
             {...attributes}
             {...listeners}
           >
