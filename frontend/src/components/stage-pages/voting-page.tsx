@@ -20,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useSocketStore } from "@/stores/socket-store";
 import { useRoleStore } from "@/stores/role-store";
 import UsersContainer from "./users-container";
+import VotingControlPanel from "../host-controls/voting-control-panel";
 
 interface SortableItemProps {
   id: number;
@@ -85,7 +86,11 @@ export default function VotingPage() {
   return (
     <div className="container mx-auto p-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {isHost && <div>placeholder for controls</div>}
+        {isHost && (
+          <div>
+            <VotingControlPanel />
+          </div>
+        )}
         <div className={!isHost ? "col-span-2" : ""}>
           <div className="space-y-2">
             <h3 className="text-lg font-semibold mb-4">Rank Nominees</h3>
