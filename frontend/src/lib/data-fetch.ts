@@ -25,3 +25,13 @@ export async function fetchRoomData(
   socket.emit("join-room", roomId);
   return response.data;
 }
+
+export async function getNominationMap(roomId: string, userName: string) {
+  const response = await axios.post<RoomData>(
+    `${backendBase}/room/${roomId}/getRoomData`,
+    {
+      userName,
+    },
+  );
+  return response.data.nominations;
+}
