@@ -10,7 +10,7 @@ import {
   SendVotePayload,
 } from "@/lib/vote-service";
 import { toast } from "sonner";
-import { getNominationMap } from "@/lib/data-fetch";
+import { getNominationMap, GetNominationMapPayload } from "@/lib/data-fetch";
 import axios from "axios";
 import { NominationsMap } from "@/types/socket-store-types";
 import { useSocketStore } from "@/stores/socket-store";
@@ -84,5 +84,7 @@ export default function useVotingActions() {
     handleSetDone: (payload: SetDonePayload) => setDoneMutation.mutate(payload),
     handleSendVote: (payload: SendVotePayload) =>
       sendVoteMutation.mutate(payload),
+    updateNominationMap: (payload: GetNominationMapPayload) =>
+      updateNominationMap.mutate(payload),
   };
 }
