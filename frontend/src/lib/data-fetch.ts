@@ -26,7 +26,14 @@ export async function fetchRoomData(
   return response.data;
 }
 
-export async function getNominationMap(roomId: string, userName: string) {
+export interface GetNominationMapPayload {
+  roomId: string;
+  userName: string;
+}
+export async function getNominationMap({
+  roomId,
+  userName,
+}: GetNominationMapPayload) {
   const response = await axios.post<RoomData>(
     `${backendBase}/room/${roomId}/getRoomData`,
     {
