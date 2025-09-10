@@ -76,7 +76,7 @@ export default function SortableList() {
     }
   }
   return (
-    <div>
+    <div className="p-5 border-2 rounded-3xl">
       <h3 className="text-md font-semibold mb-4">Rank Nominees</h3>
       <ScrollArea className="h-48 lg:h-96">
         <DndContext
