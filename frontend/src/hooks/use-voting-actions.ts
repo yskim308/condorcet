@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import { getNominationMap, GetNominationMapPayload } from "@/lib/data-fetch";
 import axios from "axios";
 import { NominationsMap } from "@/types/socket-store-types";
-import { useSocketStore } from "@/stores/socket-store";
 
 export default function useVotingActions() {
   const onVotingActionError = (
@@ -48,11 +47,6 @@ export default function useVotingActions() {
     toast.error(errorMessage);
   };
 
-  const onUpdateNominationMapSuccess = (map: NominationsMap) => {
-    const setNominationMap = useSocketStore((state) => state.setNominationMap);
-    setNominationMap(map);
-  };
-
   const sendVoteMutation = useMutation({
     mutationFn: sendVote,
     onError: (error, _, __) => onVotingActionError("ballot", error),
@@ -73,11 +67,9 @@ export default function useVotingActions() {
     onError: (error, _, __) => onVotingActionError("done", error),
   });
 
-  const updateNominationMap = useMutation({
+  const fetchNominationMap = useMutation({
     mutationFn: getNominationMap,
     onError: (error, _, __) => onVotingActionError("update", error),
-    onSuccess: (data: NominationsMap, _, __) =>
-      onUpdateNominationMapSuccess(data),
   });
 
   return {
@@ -88,7 +80,6 @@ export default function useVotingActions() {
     handleSetDone: (payload: SetDonePayload) => setDoneMutation.mutate(payload),
     handleSendVote: (payload: SendVotePayload) =>
       sendVoteMutation.mutate(payload),
-    updateNominationMap: (payload: GetNominationMapPayload) =>
-      updateNominationMap.mutate(payload),
+    fetchNominationMap,
   };
 }
