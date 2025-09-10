@@ -1,9 +1,18 @@
 import { useRoomStore } from "@/stores/room-store";
-import { useShallow } from "zustand/shallow";
-import { Button } from "../ui/button";
-import useVotingActions from "@/hooks/use-voting-actions";
-import { toast } from "sonner";
 import { useSocketStore } from "@/stores/socket-store";
+import useVotingActions from "@/hooks/use-voting-actions";
+import { useShallow } from "zustand/shallow";
+import { toast } from "sonner";
+
+import { Button } from "../ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 
 export default function VotingControlPanel() {
   const { hostKey, roomId } = useRoomStore(
@@ -18,11 +27,11 @@ export default function VotingControlPanel() {
 
   const handleSetDoneClick = () => {
     if (!votedUsers.length) {
-      toast.error("no one has voted yet!");
+      toast.error("No one has voted yet!");
       return;
     }
     if (!hostKey || !roomId) {
-      toast.error("hostkey or roomId is not defined in global state");
+      toast.error("Hostkey or Room ID is not defined in global state.");
       return;
     }
     handleSetDone({
@@ -31,11 +40,34 @@ export default function VotingControlPanel() {
     });
   };
 
+  const hasVotes = votedUsers.length > 0;
+
   return (
-    <>
-      <Button onClick={handleSetDoneClick} disabled={votedUsers.length === 0}>
-        count ballots
-      </Button>
-    </>
+    <Card className="flex flex-col">
+      <CardHeader>
+        <CardTitle>Voting Controls</CardTitle>
+        <CardDescription>
+          Once enough users have submitted their votes, you can close the polls
+          and count the ballots.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <div className="text-sm text-muted-foreground p-4 bg-muted rounded-lg">
+          <span className="font-bold text-lg text-foreground mr-3">
+            {votedUsers.length}
+          </span>{" "}
+          user(s) have voted so far.
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button
+          onClick={handleSetDoneClick}
+          disabled={!hasVotes}
+          className="w-full"
+        >
+          Count Ballots
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
