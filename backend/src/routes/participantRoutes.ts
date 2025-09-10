@@ -38,6 +38,13 @@ export const createParticipantRouter = (
           return;
         }
 
+        // check if the username is already taken
+        const userExists = await userRoomService.userExists(roomId, userName);
+        if (userExists) {
+          res.status(403).json({ error: "username already exists" });
+          return;
+        }
+
         // 'join' the user to the room
         await userRoomService.enrollUser(roomId, userName);
         socketService.emitNewUser(roomId, userName);
