@@ -40,7 +40,11 @@ export default function useVotingActions() {
         errorMessage += serverMessage;
       }
     }
+    if (error instanceof Error) {
+      errorMessage += error.message;
+    }
 
+    console.error(errorMessage);
     toast.error(errorMessage);
   };
 
