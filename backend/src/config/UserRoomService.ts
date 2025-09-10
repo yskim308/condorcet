@@ -1,5 +1,4 @@
 import type { RedisClientType } from "redis";
-import { getErrorMessage, getRedisError } from "../util/getErrorMessage";
 import { TTL } from "./constants";
 
 class UserRoomService {
