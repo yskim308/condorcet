@@ -38,7 +38,7 @@ export default function SortableList() {
       toast.error("username is not set?");
       return;
     }
-    if (userName in votedUsers) {
+    if (votedUsers.includes(userName)) {
       setUserSubmitted(true);
     }
   }, [votedUsers]);
