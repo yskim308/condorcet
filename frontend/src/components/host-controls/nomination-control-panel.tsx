@@ -18,7 +18,10 @@ import {
 export default function NominationControlPanel() {
   const [input, setInput] = useState<string>("");
 
-  const { handleAddNominee, handleSetVoting } = useVotingActions();
+  const userName = useRoomStore((state) => state.userName);
+
+  const { handleAddNominee, handleSetVoting, updateNominationMap } =
+    useVotingActions();
 
   const { hostKey, roomId } = useRoomStore(
     useShallow((state) => ({
@@ -45,11 +48,15 @@ export default function NominationControlPanel() {
   };
 
   const handleSetVotingClick = () => {
-    if (!roomId || !hostKey) {
-      toast.error("hostKey or roomId is not defined!");
+    if (!roomId || !hostKey || !userName) {
+      toast.error("no recorded state for this user!");
+      console.error(
+        "from handleSetVotingClick, no roomId, hostkey, or username",
+      );
       return;
     }
     handleSetVoting({ roomId, hostKey });
+    updateNominationMap({ roomId, userName });
   };
 
   return (
@@ -80,4 +87,3 @@ export default function NominationControlPanel() {
     </Card>
   );
 }
-
