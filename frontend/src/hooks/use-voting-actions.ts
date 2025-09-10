@@ -10,50 +10,70 @@ import {
   SendVotePayload,
 } from "@/lib/vote-service";
 import { toast } from "sonner";
+import { getNominationMap } from "@/lib/data-fetch";
+import axios from "axios";
+import { NominationsMap } from "@/types/socket-store-types";
+import { useSocketStore } from "@/stores/socket-store";
 
 export default function useVotingActions() {
-  const onAddNomineeError = (error: unknown) => {
-    let errorMessage = "error while adding nominee";
-    if (error instanceof Error) {
-      errorMessage += `: ${error.message}`;
+  const onVotingActionError = (
+    action: "add" | "vote" | "done" | "ballot" | "update",
+    error: unknown,
+  ) => {
+    let errorMessage = "error while ";
+
+    if (action === "add") {
+      errorMessage += "adding nominee: ";
+    } else if (action === "vote") {
+      errorMessage += "setting state to vote: ";
+    } else if (action === "done") {
+      errorMessage += "setting state to done: ";
+    } else if (action === "ballot") {
+      errorMessage += "sending ballot: ";
+    } else if (action === "update") {
+      errorMessage += "updating nomination map: ";
     }
+
+    if (axios.isAxiosError(error)) {
+      const serverMessage = error.response?.data?.error;
+      if (serverMessage) {
+        errorMessage += serverMessage;
+      }
+    }
+
     toast.error(errorMessage);
   };
 
-  const onStateSetError = (state: "voting" | "done", error: unknown) => {
-    let errorMessage = "error while setting state to " + state;
-    if (error instanceof Error) {
-      errorMessage += `: ${error.message}`;
-    }
-    toast.error(errorMessage);
-  };
-
-  const onSendVoteError = (error: unknown) => {
-    let errorMessage = "error while sending ballot:";
-    if (error instanceof Error) {
-      errorMessage += `: ${error.message}`;
-    }
-    toast.error(errorMessage);
+  const onUpdateNominationMapSuccess = (map: NominationsMap) => {
+    const setNominationMap = useSocketStore((state) => state.setNominationMap);
+    setNominationMap(map);
   };
 
   const sendVoteMutation = useMutation({
     mutationFn: sendVote,
-    onError: (error, _, __) => onSendVoteError(error),
+    onError: (error, _, __) => onVotingActionError("ballot", error),
   });
 
   const addNomineeMutation = useMutation({
     mutationFn: addNominee,
-    onError: (error, _, __) => onAddNomineeError(error),
+    onError: (error, _, __) => onVotingActionError("add", error),
   });
 
   const setVotingMutation = useMutation({
     mutationFn: setVoting,
-    onError: (error, _, __) => onStateSetError("voting", error),
+    onError: (error, _, __) => onVotingActionError("vote", error),
   });
 
   const setDoneMutation = useMutation({
     mutationFn: setDone,
-    onError: (error, _, __) => onStateSetError("done", error),
+    onError: (error, _, __) => onVotingActionError("done", error),
+  });
+
+  const updateNominationMap = useMutation({
+    mutationFn: getNominationMap,
+    onError: (error, _, __) => onVotingActionError("update", error),
+    onSuccess: (data: NominationsMap, _, __) =>
+      onUpdateNominationMapSuccess(data),
   });
 
   return {
