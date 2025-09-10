@@ -152,9 +152,8 @@ export const createParticipantRouter = (
           return;
         }
 
-        // set the vote in redis
         await nomineeService.saveVote(roomId, vote);
-        // emit on socket
+        await userRoomService.setUserVoted(roomId, userName);
         socketService.emitNewVote(roomId, userName);
 
         res.status(200).json({ message: "vote saved" });
