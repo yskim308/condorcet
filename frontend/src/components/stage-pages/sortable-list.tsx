@@ -29,9 +29,14 @@ export default function SortableList() {
   const userName = useRoomStore((state) => state.userName);
   const roomId = useRoomStore((state) => state.roomId);
 
+  const { fetchNominationMap } = useVotingActions();
+  const { setNominationMap } = useSocketStore();
+
   const [orderedNomineeIds, setOrderedNomineeIds] = useState<number[]>(() => {
     return Object.keys(nominations).map(Number);
   });
+
+  const [mapFetched, setMapFetched] = useState<boolean>(false);
 
   useEffect(() => {
     if (!userName) {
@@ -42,6 +47,25 @@ export default function SortableList() {
       setUserSubmitted(true);
     }
   }, [votedUsers]);
+
+  // run once on load
+  useEffect(() => {
+    if (!userName || !roomId) {
+      toast.error("username or roomid not set");
+      return;
+    }
+    fetchNominationMap.mutate({ roomId, userName });
+  }, []);
+
+  // check fetch results
+
+  useEffect(() => {
+    if (fetchNominationMap.data) {
+      setNominationMap(fetchNominationMap.data);
+      setOrderedNomineeIds(Object.keys(fetchNominationMap.data).map(Number));
+      setMapFetched(true);
+    }
+  }, [fetchNominationMap.data]);
 
   const { handleSendVote } = useVotingActions();
   const handleSubmitClick = () => {
@@ -75,7 +99,7 @@ export default function SortableList() {
       });
     }
   }
-  return (
+  return mapFetched ? (
     <div className="p-5 border-2 rounded-3xl">
       <h3 className="text-md font-semibold mb-4">Rank Nominees</h3>
       <ScrollArea className="h-48 lg:h-96">
@@ -102,5 +126,7 @@ export default function SortableList() {
         Submit Vote
       </Button>
     </div>
+  ) : (
+    <div>loading...</div>
   );
 }

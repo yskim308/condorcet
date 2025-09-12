@@ -1,5 +1,5 @@
 "use client";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import useVotingActions from "@/hooks/use-voting-actions";
@@ -7,16 +7,13 @@ import { useRoomStore } from "@/stores/room-store";
 import { toast } from "sonner";
 import { useShallow } from "zustand/shallow";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { useSocketStore } from "@/stores/socket-store";
 
 export default function NominationControlPanel() {
   const [input, setInput] = useState<string>("");
 
   const userName = useRoomStore((state) => state.userName);
-  const setNominationMap = useSocketStore((state) => state.setNominationMap);
 
-  const { handleAddNominee, handleSetVoting, fetchNominationMap } =
-    useVotingActions();
+  const { handleAddNominee, handleSetVoting } = useVotingActions();
 
   const { hostKey, roomId } = useRoomStore(
     useShallow((state) => ({
@@ -50,13 +47,8 @@ export default function NominationControlPanel() {
       );
       return;
     }
-    fetchNominationMap.mutate({ roomId, userName });
     handleSetVoting({ roomId, hostKey });
   };
-
-  useEffect(() => {
-    if (fetchNominationMap.data) setNominationMap(fetchNominationMap.data);
-  }, [fetchNominationMap.data]);
 
   return (
     <Card>
