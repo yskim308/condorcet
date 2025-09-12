@@ -39,6 +39,13 @@ export default function NominationControlPanel() {
     setInput("");
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleAddNomineeAndClear();
+    }
+  };
+
   const handleSetVotingClick = () => {
     if (!roomId || !hostKey || !userName) {
       toast.error("no recorded state for this user!");
@@ -61,6 +68,7 @@ export default function NominationControlPanel() {
             <Input
               id="nominee-input"
               value={input}
+              onKeyDown={handleKeyPress}
               onChange={handleInputChange}
               placeholder="Enter nominee name"
             />
