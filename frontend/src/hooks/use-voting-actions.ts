@@ -37,8 +37,7 @@ export default function useVotingActions() {
       if (serverMessage) {
         errorMessage += serverMessage;
       }
-    }
-    if (error instanceof Error) {
+    } else if (error instanceof Error) {
       errorMessage += error.message;
     }
 
