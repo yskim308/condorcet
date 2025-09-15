@@ -15,7 +15,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useSocketStore } from "@/stores/socket-store";
-import { ScrollArea } from "../ui/scroll-area";
+import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import SortableItem from "./sortable-item";
 import { Button } from "../ui/button";
 import { useRoomStore } from "@/stores/room-store";
@@ -110,24 +110,27 @@ export default function SortableList() {
     <div className="p-5 border-2 rounded-3xl">
       <h3 className="text-md font-semibold mb-4">Rank Nominees</h3>
       <ScrollArea className="h-96">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={orderedNomineeIds}
-            strategy={verticalListSortingStrategy}
+        <div className="pr-6">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
           >
-            {orderedNomineeIds.map((nomineeId) => (
-              <SortableItem
-                key={nomineeId}
-                id={nomineeId}
-                name={nominations[nomineeId]}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+            <SortableContext
+              items={orderedNomineeIds}
+              strategy={verticalListSortingStrategy}
+            >
+              {orderedNomineeIds.map((nomineeId) => (
+                <SortableItem
+                  key={nomineeId}
+                  id={nomineeId}
+                  name={nominations[nomineeId]}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+        </div>
+        <ScrollBar className="w-10 lg:w-3 data-[state=hidden]:opacity-100" />
       </ScrollArea>
       <Button onClick={handleSubmitClick} disabled={userSubmitted}>
         Submit Vote
