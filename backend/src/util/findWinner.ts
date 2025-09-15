@@ -1,7 +1,10 @@
 import { createPreferencesArray, rankPairs, lockEdges } from "./rankUtil";
 import type { RankedPair } from "./rankUtil";
 
-export default function findWinner(votes: string[][], nominees: number): number {
+export default function findWinner(
+  votes: string[][],
+  nominees: number,
+): number {
   const preferences: number[][] = createPreferencesArray(votes, nominees);
   const rankedPairs: RankedPair[] = rankPairs(preferences);
   const graph: number[][] = lockEdges(rankedPairs, nominees);
