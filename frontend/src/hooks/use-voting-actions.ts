@@ -10,9 +10,8 @@ import {
   SendVotePayload,
 } from "@/lib/vote-service";
 import { toast } from "sonner";
-import { getNominationMap, GetNominationMapPayload } from "@/lib/data-fetch";
+import { getNominationMap } from "@/lib/data-fetch";
 import axios from "axios";
-import { NominationsMap } from "@/types/socket-store-types";
 
 export default function useVotingActions() {
   const onVotingActionError = (
