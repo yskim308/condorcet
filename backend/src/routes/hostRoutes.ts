@@ -35,7 +35,7 @@ export const createHostRouter = (
           return;
         }
 
-        const roomId = randomBytes(8).toString("hex");
+        const roomId = await roomService.findUniqueId();
         const hostKey = randomBytes(16).toString("hex");
 
         const roomData: RoomData = {
