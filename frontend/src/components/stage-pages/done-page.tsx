@@ -15,15 +15,16 @@ export default function DonePage() {
       <Card className="w-full max-w-md text-center">
         <CardHeader>
           <CardTitle className="text-2xl">Voting Complete!</CardTitle>
-          <CardDescription>The results are in.</CardDescription>
+          <CardDescription>
+            Using the ranked-choiced, tideman algorithm, a condorcet winner has
+            been found
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {winner ? (
             <div>
               <p className="text-lg text-muted-foreground">The winner is:</p>
-              <h2 className="text-4xl font-bold tracking-tighter mt-2">
-                {winner}
-              </h2>
+              <h2 className="text-4xl font-bold tracking-tighter">{winner}</h2>
             </div>
           ) : (
             <div>
