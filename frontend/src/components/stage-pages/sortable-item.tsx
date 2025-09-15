@@ -15,6 +15,7 @@ export default function SortableItem({ id, name }: SortableItemProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    touchAction: "none",
   };
 
   return (
