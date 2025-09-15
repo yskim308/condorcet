@@ -38,6 +38,7 @@ export default function RoomPage() {
     queryKey: ["room", roomId],
     queryFn: () => fetchRoomData(roomId as string, userName!),
     enabled: !!roomId && !!userName,
+    retry: false,
   });
 
   useEffect(() => {
