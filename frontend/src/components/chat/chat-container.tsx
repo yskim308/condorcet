@@ -19,10 +19,6 @@ export default function ChatContainer({ roomId }: ChatContainerProps) {
   const setMessages = useSocketStore((state) => state.setMessages);
   const userName = useRoomStore((state) => state.userName);
 
-  if (!userName) {
-    return;
-  }
-
   const messageEndRef = useRef<HTMLDivElement>(null);
 
   const messageQuery = useQuery({
@@ -46,6 +42,10 @@ export default function ChatContainer({ roomId }: ChatContainerProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  if (!userName) {
+    return;
+  }
 
   return (
     <Card className="m-5 flex flex-col h-full max-h-[600px] bg-background lg:w-1/2 lg:p-10">
