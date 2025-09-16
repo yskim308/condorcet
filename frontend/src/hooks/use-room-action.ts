@@ -8,7 +8,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useRoomStore } from "@/stores/room-store";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 
 export default function useRoomActions() {
   const router = useRouter();
@@ -35,9 +35,7 @@ export default function useRoomActions() {
 
   const onError = (action: "join" | "create", error: unknown) => {
     let errorMessage = "error while trying to ";
-    action === "join"
-      ? (errorMessage += "join room: ")
-      : (errorMessage += "create room: ");
+    errorMessage += action === "join" ? "join room:" : "create room: ";
 
     if (axios.isAxiosError(error)) {
       errorMessage += error.response?.data?.error;
