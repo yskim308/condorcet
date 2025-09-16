@@ -1,26 +1,17 @@
 services:
   app:
     build:
-      context: .       # Look for the Dockerfile in the current directory
-      dockerfile: Dockerfile # Specify the Dockerfile to use (optional if named 'Dockerfile')
+      context: .       
       target: development    # Use the development stage for hot reloading
     ports:
-      - "4000:4000"    # Map host port 4000 to container port 4000
+      - "4000:4000"    
 
-    # Load environment variables from .env files
-    # Compose loads env_file in the order specified.
     env_file:
       - ./.env         # Load common dev variables
       - ./.env.local   # Load local overrides (and potentially sensitive ones)
 
     volumes:
-      # Mount the current host directory into the container's /app directory.
-      # This allows for live code changes during development without rebuilding the image.
       - .:/app
-      # Create an anonymous volume for node_modules inside the container.
-      # This prevents the host's node_modules (which might be incompatible) from overriding
-      # the container's node_modules (which were installed by bun install inside the container).
-      # This is CRUCIAL for Node.js/bun dev experience with volumes.
       - /app/node_modules
 
     command: 
@@ -28,13 +19,13 @@ services:
 
 
   redis:
-    image: "redis:latest" # Use the latest Redis image
+    image: "redis:latest" 
     ports:
-      - "6379:6379" # Map host port 6379 to container port 6379 (Redis default port)
+      - "6379:6379" 
     command: redis-server --appendonly yes # Optional: Enable AOF persistence for Redis
     volumes:
       - redis_data:/data # Mount a named volume for Redis data persistence
 
 volumes:
-  redis_data: # Define the named volume for Redis data
+  redis_data: 
 
