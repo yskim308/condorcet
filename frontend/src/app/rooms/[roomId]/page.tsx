@@ -62,8 +62,8 @@ export default function RoomPage() {
       setNominationMap({});
       setNominationList({});
     }
-    query.data?.votedUsers && setVotedUsers(query.data.votedUsers);
-    query.data?.winner && setWinner(query.data.winner);
+    if (query.data?.votedUsers) setVotedUsers(query.data.votedUsers);
+    if (query.data?.winner) setWinner(query.data.winner);
   }, [query.isSuccess, query.data]);
 
   useEffect(() => {
