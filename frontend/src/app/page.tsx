@@ -1,17 +1,25 @@
 "use client";
 import { toast } from "sonner";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import useRoomActions from "@/hooks/use-room-action";
+import { useSearchParams } from "next/navigation";
 
 export default function Home() {
   const [userName, setUserName] = useState<string>("");
   const [roomCode, setRoomCOde] = useState<string>("");
 
   const roomActions = useRoomActions();
+  const params = useSearchParams();
+  const error = params.get("error");
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  });
 
   const validate = (action: "join" | "create") => {
     if (!userName.trim()) {
