@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .       
-      target: development    # Use the development stage for hot reloading
+      target: release    # Use the development stage for hot reloading
     ports:
       - "4000:4000"    
 
@@ -14,8 +14,8 @@ services:
       - .:/app
       - /app/node_modules
 
-    command: 
-      sh -c "bun install && bun --watch src/index.ts"
+    # command: 
+    #   sh -c "bun install && bun --watch src/index.ts"
 
 
   redis:
