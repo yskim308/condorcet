@@ -27,7 +27,7 @@ jobs:
           if ! cd backend && sudo docker-compose up --build --wait; then
             echo "❌ Docker deployment failed"
             echo "Container logs:"
-            docker compose logs
+            docker-compose logs
             exit 1
           fi
           echo "✅ Docker deployment completed successfully"
