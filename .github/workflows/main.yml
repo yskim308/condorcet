@@ -24,7 +24,7 @@ jobs:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
         run: |
           echo "🚀 Starting Docker deployment..."
-          if ! cd backend && docker compose up --build --wait; then
+          if ! cd backend && sudo docker compose up --build --wait; then
             echo "❌ Docker deployment failed"
             echo "Container logs:"
             docker compose logs
