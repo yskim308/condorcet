@@ -24,7 +24,7 @@ jobs:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
         run: |
           echo "🚀 Starting Docker deployment..."
-          if ! docker compose up --build -d --wait; then
+          if ! docker compose up --build --wait; then
             echo "❌ Docker deployment failed"
             echo "Container logs:"
             docker compose logs
@@ -33,9 +33,9 @@ jobs:
           echo "✅ Docker deployment completed successfully"
           
       - name: Show Docker Logs on Failure
-        if: failure()
+        if: always()
         run: |
-          echo "❌ Deployment failed - showing logs:"
+          echo "showing logs"
           docker compose logs
           
       - name: Prune Old Docker Images
