@@ -16,8 +16,8 @@ jobs:
         
       - name: Inject Secrets and Run Docker Compose
         run: |
-          export ENV_VAR_1=${{ secrets.ENV_VAR_1 }}
-          export SECRET_VAR_1=${{ secrets.SECRET_VAR_1 }}
+          export PORT=${{ secrets.PORT }}
+          export SECRET_KEY=${{ secrets.SECRET_KEY }}
 
           # Run Docker Compose.
           docker compose up --build -d
