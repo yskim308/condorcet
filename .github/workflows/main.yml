@@ -7,18 +7,32 @@ on:
 
 jobs:
   deploy:
-
     runs-on: self-hosted
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        
-      - name: Inject Secrets and Run Docker Compose
+
+      - name: Deploy with Docker Compose and Verify
+        # Use the 'env' keyword to inject secrets securely and cleanly.
+        env:
+          PORT: ${{ secrets.PORT }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
         run: |
-          export PORT=${{ secrets.PORT }}
-          export SECRET_KEY=${{ secrets.SECRET_KEY }}
+          # The --wait flag tells Docker to wait until the containers are "healthy"
+          # before the command exits. This is the key to catching startup errors.
+          docker compose up --build -d --wait
 
-          # Run Docker Compose.
-          docker compose up --build -d
+      - name: Show Docker Logs on Failure
+        # This step will ONLY run if the previous "Deploy" step fails.
+        if: failure()
+        run: |
+          echo "Deployment failed. Displaying container logs..."
+          # Dumps the logs from all containers for debugging.
+          docker compose logs
 
+      - name: Prune Old Docker Images
+        # Optional but recommended: clean up old images to save disk space.
+        if: success()
+        run: |
+          docker image prune -a -f
