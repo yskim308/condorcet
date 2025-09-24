@@ -14,7 +14,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy with Docker Compose and Verify
-        # Use the 'env' keyword to inject secrets securely and cleanly.
         env:
           PORT: ${{ secrets.PORT }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
@@ -24,7 +23,6 @@ jobs:
           docker compose up --build -d --wait
 
       - name: Show Docker Logs on Failure
-        # This step will ONLY run if the previous "Deploy" step fails.
         if: failure()
         run: |
           echo "Deployment failed. Displaying container logs..."
@@ -32,7 +30,6 @@ jobs:
           docker compose logs
 
       - name: Prune Old Docker Images
-        # Optional but recommended: clean up old images to save disk space.
         if: success()
         run: |
           docker image prune -a -f
