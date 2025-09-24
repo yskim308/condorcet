@@ -36,7 +36,7 @@ jobs:
         if: always()
         run: |
           echo "showing logs"
-          sudo cd backend && docker-compose logs
+          sudo cd backend && sudo docker-compose logs
           
       - name: Prune Old Docker Images
         if: success()
