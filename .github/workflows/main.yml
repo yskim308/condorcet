@@ -1,35 +1,46 @@
 name: Deploy to EC2
-
 on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
     runs-on: self-hosted
-
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
-
+        run: |
+          echo "🚀 Starting repository checkout..."
+        
+      - uses: actions/checkout@v4
+      
+      - name: Verify Checkout
+        run: |
+          echo "✅ Repository checkout completed"
+          echo "✅ Docker compose file found"
+          
       - name: Deploy with Docker Compose and Verify
         env:
           PORT: ${{ secrets.PORT }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
         run: |
-          # The --wait flag tells Docker to wait until the containers are "healthy"
-          # before the command exits. This is the key to catching startup errors.
-          docker compose up --build -d --wait
-
+          echo "🚀 Starting Docker deployment..."
+          if ! docker compose up --build -d --wait; then
+            echo "❌ Docker deployment failed"
+            echo "Container logs:"
+            docker compose logs
+            exit 1
+          fi
+          echo "✅ Docker deployment completed successfully"
+          
       - name: Show Docker Logs on Failure
         if: failure()
         run: |
-          echo "Deployment failed. Displaying container logs..."
-          # Dumps the logs from all containers for debugging.
+          echo "❌ Deployment failed - showing logs:"
           docker compose logs
-
+          
       - name: Prune Old Docker Images
         if: success()
         run: |
+          echo "🚀 Starting image cleanup..."
           docker image prune -a -f
+          echo "✅ Image cleanup completed"
