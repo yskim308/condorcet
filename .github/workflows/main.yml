@@ -33,11 +33,14 @@ jobs:
           fi
           echo "✅ Docker deployment completed successfully"
           
-      - name: Show Docker Logs on Failure
+
+      - name: Show Docker Logs
         if: always()
         run: |
-          echo "showing logs"
-          cd backend && sudo docker-compose logs
+          echo "showing logs for app"
+          cd backend && sudo docker-compose logs app
+          echo "showing logs for docker"
+          cd backend && sudo docker-compose logs redis
           
       - name: Prune Old Docker Images
         if: success()
