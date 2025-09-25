@@ -26,4 +26,4 @@ WORKDIR /app
 COPY --from=build /app/dist ./dist
 EXPOSE 4000
 
-CMD ["bun", "run", "dist/index.js"]
+CMD ["bun", "dist/index.js"]
