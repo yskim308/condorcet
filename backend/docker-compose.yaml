@@ -10,9 +10,9 @@ services:
     #   - ./.env         # Load common dev variables
     #   - ./.env.local   # Load local overrides (and potentially sensitive ones)
 
-    volumes:
-      - .:/app
-      - /app/node_modules
+    # volumes:
+    #   - .:/app
+    #   - /app/node_modules
 
     # command: 
     #   sh -c "bun install && bun --watch src/index.ts"
