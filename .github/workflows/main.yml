@@ -40,11 +40,12 @@ jobs:
 
       - name: Show Docker Logs
         if: always()
+        working-directory: backend
         run: |
           echo "showing logs for app"
-          cd backend && sudo docker-compose logs app
+          sudo docker-compose logs app
           echo "showing logs for redis"
-          cd backend && sudo docker-compose logs redis
+          sudo docker-compose logs redis
 
       - name: Prune Old Docker Images
         if: success()
