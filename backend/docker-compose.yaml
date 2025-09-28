@@ -6,8 +6,8 @@ services:
     ports:
       - "4000:4000"    
 
-    # env_file:
-    #   - ./.env         # Load common dev variables
+    env_file:
+      - ./.env         # Load common dev variables
     #   - ./.env.local   # Load local overrides (and potentially sensitive ones)
 
     # volumes:
