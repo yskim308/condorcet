@@ -3,45 +3,49 @@ on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: self-hosted
+
     steps:
       - name: Checkout Repository
         run: |
           echo "🚀 Starting repository checkout..."
-        
+
       - uses: actions/checkout@v4
-      
+
       - name: Verify Checkout
         run: |
           echo "✅ Repository checkout completed"
-          echo "✅ Docker compose file found"
-          
-      - name: Deploy with Docker Compose and Verify
-        env:
-          PORT: ${{ secrets.PORT }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          ls -R   # show repo structure for debugging
+
+      - name: Create .env file
+        run: |
+          echo "PORT=${{ secrets.PORT }}" > backend/.env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> backend/.env
+          echo "✅ .env file created in backend/"
+
+      - name: Deploy with Docker Compose
         run: |
           echo "🚀 Starting Docker deployment..."
           cd backend
           if ! sudo docker-compose up --build -d; then
             echo "❌ Docker deployment failed"
             echo "Container logs:"
-            docker-compose logs
+            sudo docker-compose logs
             exit 1
           fi
           echo "✅ Docker deployment completed successfully"
-          
 
       - name: Show Docker Logs
         if: always()
         run: |
           echo "showing logs for app"
           cd backend && sudo docker-compose logs app
-          echo "showing logs for docker"
+          echo "showing logs for redis"
           cd backend && sudo docker-compose logs redis
-          
+
       - name: Prune Old Docker Images
         if: success()
         run: |
