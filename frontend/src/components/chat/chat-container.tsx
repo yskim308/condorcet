@@ -26,7 +26,7 @@ export default function ChatContainer({ roomId }: ChatContainerProps) {
     queryFn: () => getALlMessages(roomId),
     staleTime: Infinity,
     // refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    // refetchOnWindowFocus: false,
   });
 
   const scrollToBottom = () => {
@@ -36,8 +36,9 @@ export default function ChatContainer({ roomId }: ChatContainerProps) {
   // setting messages on send
   useEffect(() => {
     if (!messageQuery.isSuccess || !messageQuery.data) return;
+    if (messages.length > 0) return;
     setMessages(messageQuery.data);
-  }, [messageQuery.isSuccess, messageQuery.data]);
+  }, [messageQuery.isSuccess, messageQuery.data, messages.length, setMessages]);
 
   useEffect(() => {
     scrollToBottom();
