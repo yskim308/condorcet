@@ -25,7 +25,7 @@ export default function ChatContainer({ roomId }: ChatContainerProps) {
     queryKey: ["messages", roomId],
     queryFn: () => getALlMessages(roomId),
     staleTime: Infinity,
-    refetchOnMount: false,
+    // refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
